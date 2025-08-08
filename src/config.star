@@ -29,6 +29,7 @@ def write_configs(plan, l1_config, l2_args):
             "poster_config.json": struct(template=read_file("../templates/poster_config.json.tmpl"), data=data),
             "inbox_reader_config.json": struct(template=read_file("../templates/inbox_reader_config.json.tmpl"), data=data),
             "validation_node_config.json": struct(template=read_file("../templates/validation_node_config.json.tmpl"), data=data),
+            "val_jwt.hex": struct(template=read_file("../templates/val_jwt.hex.tmpl"), data=data),
         },
     )
     return artifact
