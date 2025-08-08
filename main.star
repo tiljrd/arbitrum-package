@@ -47,6 +47,10 @@ def run(plan, args):
             "image": arbnode_image,
             "cmd": ["/bin/sh", "-lc", "sleep 3600"],  # TODO: replace with real startup and L1 wiring
             "ports": {"rpc": {"number": arbnode_rpc, "protocol": "TCP"}},
+            "env_vars": {
+                "L1_RPC_URL": str(l1_rpc_url),
+                "L1_CHAIN_ID": str(l1_network_id),
+            },
         },
     )
     plan.print("Arbnode service added: {}".format(arbnode))
@@ -56,6 +60,10 @@ def run(plan, args):
         config={
             "image": nitro_cfg.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
             "cmd": ["/bin/sh", "-lc", "sleep 3600"],  # TODO
+            "env_vars": {
+                "L1_RPC_URL": str(l1_rpc_url),
+                "L1_CHAIN_ID": str(l1_network_id),
+            },
         },
     )
     batch_poster = plan.add_service(
@@ -63,6 +71,10 @@ def run(plan, args):
         config={
             "image": nitro_cfg.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
             "cmd": ["/bin/sh", "-lc", "sleep 3600"],  # TODO
+            "env_vars": {
+                "L1_RPC_URL": str(l1_rpc_url),
+                "L1_CHAIN_ID": str(l1_network_id),
+            },
         },
     )
     plan.print("Inbox reader and batch poster added.")
