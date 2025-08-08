@@ -38,6 +38,12 @@ Next steps
 - Add startup scripts/args for arbnode, inbox-reader, and batch-poster to connect to L1 and arb-reth (replace current sleep commands)
 - Validate eth_blockNumber increases on L2 and that L1 batch submissions appear in Nitro logs
 - Build and use a local arb-reth Docker image (see below) so the sequencer can start producing L2 blocks
+Environment passed to arb-reth
+- The package passes the following env vars to the arb-reth service:
+  - L1_RPC_URL: the L1 RPC endpoint from the ethereum package
+  - L1_CHAIN_ID: the L1 chain ID
+- Update arb-reth CLI to consume these (e.g., as flags) when wiring rollup config.
+
 
 # Arbitrum Kurtosis Package (arb-reth)
 
