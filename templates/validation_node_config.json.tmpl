@@ -1,19 +1,5 @@
 {
-  "persistent": {
-    "chain": "local"
-  },
-  "ws": {
-    "addr": ""
-  },
-  "http": {
-    "addr": ""
-  },
-  "validation": {
-    "api-auth": true,
-    "api-public": false
-  },
-  "auth": {
-    "jwtsecret": "{{ .ValJwtSecret }}",
-    "addr": "0.0.0.0"
-  }
+  "addr": "0.0.0.0",
+  "port": {{ .ValNodePort }},
+  "auth": { "jwtsecret": "{{ .ValJwtSecret }}" }
 }
