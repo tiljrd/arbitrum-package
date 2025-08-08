@@ -1,6 +1,6 @@
 # Arbitrum Kurtosis package using arb-reth + Nitro components (wired to ethereum package for L1)
 
-ethereum_package = import_module("github.com/LZeroAnalytics/ethereum-package/main.star")
+ethereum_package = import_module("github.com/ethpandaops/ethereum-package/main.star")
 
 def run(plan, args):
     plan.print("Starting Arbitrum package (ethereum package for L1)")
@@ -23,9 +23,9 @@ def run(plan, args):
     seq_p2p = l2_cfg.get("sequencer", {}).get("p2p_port", 30303)
     arb_reth = plan.add_service(
         name="arb-reth",
-        config={
-            "image": seq_image,
-            "cmd": [
+        config=ServiceConfig(
+            image=seq_image,
+            cmd= [
                 "/usr/local/bin/arb-reth",
                 "node",
                 "--chain", "dev",
@@ -36,16 +36,16 @@ def run(plan, args):
                 "--authrpc.port", "8551",
                 "--rollup.compute-pending-block"
             ],
-            "ports": {
-                "rpc": {"number": seq_rpc, "protocol": "TCP"},
-                "engine": {"number": 8551, "protocol": "TCP"},
-                "p2p": {"number": seq_p2p, "protocol": "TCP"}
+            ports = {
+                "rpc": PortSpec(number = seq_rpc, transport_protocol = "TCP"),
+                "engine": PortSpec(number = 8551, transport_protocol = "TCP"),
+                "p2p": PortSpec(number = seq_p2p, transport_protocol = "TCP")
             },
-            "env_vars": {
+            env_vars = {
                 "L1_RPC_URL": str(l1_rpc_url),
                 "L1_CHAIN_ID": str(l1_network_id),
-            },
-        },
+            }
+        )
     )
     plan.print("Sequencer service added: {}".format(arb_reth))
 
@@ -54,9 +54,9 @@ def run(plan, args):
     arbnode_rpc = nitro_cfg.get("arbnode", {}).get("rpc_port", 8549)
     arbnode = plan.add_service(
         name="arbnode",
-        config={
-            "image": arbnode_image,
-            "cmd": [
+        config=ServiceConfig(
+            image=arbnode_image,
+            cmd=[
                 "/usr/local/bin/nitro",
                 "--http.addr", "0.0.0.0",
                 "--http.port", str(arbnode_rpc),
@@ -72,24 +72,24 @@ def run(plan, args):
                 "--graphql.vhosts", "*",
                 "--graphql.corsdomain", "*"
             ],
-            "ports": {
-                "rpc": {"number": arbnode_rpc, "protocol": "TCP"},
-                "feed": {"number": 9642, "protocol": "TCP"},
-                "graphql": {"number": 8548, "protocol": "TCP"}
+            ports={
+                "rpc": PortSpec(number=arbnode_rpc, transport_protocol="TCP"),
+                "feed": PortSpec(number=9642, transport_protocol="TCP"),
+                "graphql": PortSpec(number=8548, transport_protocol="TCP"),
             },
-            "env_vars": {
+            env_vars={
                 "L1_RPC_URL": str(l1_rpc_url),
                 "L1_CHAIN_ID": str(l1_network_id),
             },
-        },
+        ),
     )
     plan.print("Arbnode service added: {}".format(arbnode))
 
     inbox_reader = plan.add_service(
         name="inbox-reader",
-        config={
-            "image": nitro_cfg.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
-            "cmd": [
+        config=ServiceConfig(
+            image=nitro_cfg.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
+            cmd=[
                 "/usr/local/bin/nitro",
                 "--http.addr", "0.0.0.0",
                 "--parent-chain.url", str(l1_rpc_url),
@@ -98,17 +98,17 @@ def run(plan, args):
                 "--node.inbox-reader.block-range", "256",
                 "--node.inbox-reader.read-mode", "latest"
             ],
-            "env_vars": {
+            env_vars={
                 "L1_RPC_URL": str(l1_rpc_url),
                 "L1_CHAIN_ID": str(l1_network_id),
             },
-        },
+        ),
     )
     batch_poster = plan.add_service(
         name="batch-poster",
-        config={
-            "image": nitro_cfg.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
-            "cmd": [
+        config=ServiceConfig(
+            image=nitro_cfg.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
+            cmd=[
                 "/usr/local/bin/nitro",
                 "--http.addr", "0.0.0.0",
                 "--parent-chain.url", str(l1_rpc_url),
@@ -117,11 +117,11 @@ def run(plan, args):
                 "--node.batch-poster.max-delay", "3s",
                 "--node.batch-poster.max-tx-data-size", "120000",
             ],
-            "env_vars": {
+            env_vars={
                 "L1_RPC_URL": str(l1_rpc_url),
                 "L1_CHAIN_ID": str(l1_network_id),
             },
-        },
+        ),
     )
     plan.print("Inbox reader and batch poster added.")
 
