@@ -60,12 +60,18 @@ def run(plan, args):
                 "/usr/local/bin/nitro",
                 "--http.addr", "0.0.0.0",
                 "--http.port", str(arbnode_rpc),
+                "--http.api", "net,web3,eth,txpool,debug",
                 "--parent-chain.url", str(l1_rpc_url),
                 "--execution.engine", "http://arb-reth:8551",
                 "--execution.engine.auth", "",
-                "--node.sequencer", "true"
+                "--node.sequencer", "true",
+                "--node.feed.output.enable",
+                "--node.feed.output.port", "9642"
             ],
-            "ports": {"rpc": {"number": arbnode_rpc, "protocol": "TCP"}},
+            "ports": {
+                "rpc": {"number": arbnode_rpc, "protocol": "TCP"},
+                "feed": {"number": 9642, "protocol": "TCP"}
+            },
             "env_vars": {
                 "L1_RPC_URL": str(l1_rpc_url),
                 "L1_CHAIN_ID": str(l1_network_id),
