@@ -32,7 +32,7 @@ def run(plan, args={}):
             image=valnode_image,
             entrypoint=["/usr/local/bin/nitro-val"],
             cmd=["--conf.file=/config/validation_node_config.json"],
-            files=[FilesArtifactMount(artifact=cfg_artifact, mountpoint="/config")],
+            files={"/config": cfg_artifact},
             ports={
                 "rpc": PortSpec(number=valnode_port, transport_protocol="TCP"),
             },
@@ -57,14 +57,13 @@ def run(plan, args={}):
                 "--graphql.vhosts=*",
                 "--graphql.corsdomain=*",
             ],
-            files=[FilesArtifactMount(artifact=cfg_artifact, mountpoint="/config")],
+            files={"/config": cfg_artifact},
             ports={
                 "rpc": PortSpec(number=seq_rpc, transport_protocol="TCP"),
                 "ws": PortSpec(number=seq_ws, transport_protocol="TCP"),
                 "feed": PortSpec(number=seq_feed, transport_protocol="TCP"),
             },
         ),
-        dependencies=[validation_node.name],
     )
 
     inbox_image = l2_args.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
@@ -77,9 +76,8 @@ def run(plan, args={}):
                 "--conf.file=/config/inbox_reader_config.json",
                 "--node.inbox-reader=true",
             ],
-            files=[FilesArtifactMount(artifact=cfg_artifact, mountpoint="/config")],
+            files={"/config": cfg_artifact},
         ),
-        dependencies=[sequencer.name],
     )
 
     poster_image = l2_args.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
@@ -91,18 +89,17 @@ def run(plan, args={}):
             cmd=[
                 "--conf.file=/config/poster_config.json",
             ],
-            files=[FilesArtifactMount(artifact=cfg_artifact, mountpoint="/config")],
+            files={"/config": cfg_artifact},
         ),
-        dependencies=[sequencer.name],
     )
 
     use_validator = bool(l2_args.get("use_validator", True))
-    validator_rpc = None
+    validator_rpc = ""
     if use_validator:
         val_image = l2_args.get("validator", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
         val_rpc = int(l2_args.get("validator", {}).get("rpc_port", 8247))
         val_ws = int(l2_args.get("validator", {}).get("ws_port", 8248))
-        validator = plan.add_service(
+        plan.add_service(
             name="validator",
             config=ServiceConfig(
                 image=val_image,
@@ -111,20 +108,19 @@ def run(plan, args={}):
                     "--conf.file=/config/validator_config.json",
                     "--http.api=net,web3,arb,debug",
                 ],
-                files=[FilesArtifactMount(artifact=cfg_artifact, mountpoint="/config")],
+                files={"/config": cfg_artifact},
                 ports={
                     "rpc": PortSpec(number=val_rpc, transport_protocol="TCP"),
                     "ws": PortSpec(number=val_ws, transport_protocol="TCP"),
                 },
             ),
-            dependencies=[validation_node.name, sequencer.name],
         )
-        validator_rpc = validator.ports["rpc"].url
+        validator_rpc = "http://validator:{}".format(val_rpc)
 
     return {
         "l1_rpc_url": str(l1_rpc_url),
         "l1_chain_id": str(l1_chain_id),
-        "l2_rpc_url": sequencer.ports["rpc"].url,
-        "validation_api_url": validation_node.ports["rpc"].url,
-        "validator_rpc_url": validator_rpc or "",
+        "l2_rpc_url": "http://sequencer:{}".format(seq_rpc),
+        "validation_api_url": "http://validation-node:{}".format(valnode_port),
+        "validator_rpc_url": validator_rpc,
     }
