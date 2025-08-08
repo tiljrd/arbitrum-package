@@ -1,0 +1,91 @@
+# Arbitrum Kurtosis Package (arb-reth + Nitro)
+
+This Kurtosis package launches a minimal Arbitrum stack using:
+- L1 provided by the ethereum Kurtosis package (or a local anvil as a fallback during development)
+- An arb-reth sequencer image (local build)
+- Nitro components (arbnode, inbox-reader, batch-poster)
+
+Status: scaffold; wiring will evolve as arb-reth implementation completes.
+
+Using the ethereum package for L1
+- This package uses the ethereum package to spin up a minimal L1. The args/minimal.yaml contains an `ethereum_package: {}` block that is passed directly to the ethereum package’s `run()` method, mirroring the optimism-package import/launch pattern.
+
+Build arb-reth Docker image locally
+- From the reth repo root:
+  - docker build -t arb-reth:local -f crates/arbitrum/bin/Dockerfile .
+  - If you run into storage issues, run: docker system prune
+
+Run the package
+- Pull latest changes:
+  - git pull
+- Clean any old enclaves:
+  - kurtosis clean -a
+- Run:
+  - kurtosis run --enclave test . --args-file args/minimal.yaml
+
+View logs and endpoints
+- L1 RPC: Returned from the ethereum package outputs (printed at the end of `kurtosis run` as `l1_rpc`).d)
+- L2 RPC (arb-reth): http://arb-reth:8547
+- Arbnode RPC: http://arbnode:8549
+- Logs:
+  - kurtosis service logs test l1
+  - kurtosis service logs test arb-reth
+  - kurtosis service logs test arbnode
+  - kurtosis service logs test inbox-reader
+  - kurtosis service logs test batch-poster
+
+Next steps
+- Add startup scripts/args for arbnode, inbox-reader, and batch-poster to connect to L1 and arb-reth (replace current sleep commands)
+- Validate eth_blockNumber increases on L2 and that L1 batch submissions appear in Nitro logs
+- Build and use a local arb-reth Docker image (see below) so the sequencer can start producing L2 blocks
+Environment passed to arb-reth
+- The package passes the following env vars to the arb-reth service:
+  - L1_RPC_URL: the L1 RPC endpoint from the ethereum package
+  - L1_CHAIN_ID: the L1 chain ID
+- Update arb-reth CLI to consume these (e.g., as flags) when wiring rollup config.
+
+
+# Arbitrum Kurtosis Package (arb-reth)
+
+This Kurtosis package launches a local Arbitrum test network using:
+- arb-reth as the L2 execution/sequencer client (tiljrd/reth)
+- Nitro components (tiljrd/nitro) for inbox/rollup services and L1 posting
+- An L1 dev chain (geth/anvil)
+- Batch poster and inbox reader
+- Optional DAS components depending on config
+
+Status:
+- Initial scaffolding is in place; services are placeholders that will be wired with real configs.
+- The arb-reth Dockerfile clones tiljrd/arb-alloy into the builder image to satisfy path deps.
+
+Prereqs:
+- Docker
+- Kurtosis CLI
+- Make sure your local repos are up to date:
+  - tiljrd/reth
+  - tiljrd/nitro
+  - tiljrd/nitro-testnode (reference for configs/ports)
+  - tiljrd/optimism-package (structure reference)
+
+Build the arb-reth image locally:
+- From tiljrd/reth:
+  docker build -t arb-reth:local -f crates/arbitrum/bin/Dockerfile .
+  Note: Current build is blocked by a c-kzg native library version conflict inside the container (revm-precompile vs reth-primitives).
+  Once c-kzg versions are aligned in the workspace, this build should succeed.
+
+Run:
+- Clean previous enclaves:
+  kurtosis clean -a
+- Execute with arguments:
+  kurtosis run --enclave test . --args-file ./args/minimal.yaml
+
+Verify (once services are fully wired):
+- L2 RPC responds and eth_blockNumber increases.
+- Nitro batch poster submits to L1 (logs).
+- Retryable operations via ArbSys/ArbRetryableTx succeed.
+
+Next steps (planned):
+- Wire real service startup commands and env vars for arbnode, inbox-reader, and batch-poster
+- Expose and connect endpoints across services
+- Integrate contract deployment/init as needed
+- Add more args-file presets beyond minimal
