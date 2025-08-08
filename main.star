@@ -23,46 +23,6 @@ def run(plan, args={}):
     }
 
     cfg_artifact = config_mod.write_configs(plan, l1_env, l2_args)
-    # Pre-deploy L2 rollup using nitro-testnode helper images
-    scripts_image = l2_args.get("scripts", {}).get("image", "nitro-testnode-scripts:local")
-    rollup_image = l2_args.get("rollupcreator", {}).get("image", "nitro-testnode-rollupcreator:local")
-
-    scripts = plan.add_service(
-        name="scripts",
-        config=ServiceConfig(
-            image=scripts_image,
-            files={"/config": cfg_artifact},
-        ),
-    )
-
-    rollupcreator = plan.add_service(
-        name="rollupcreator",
-        config=ServiceConfig(
-            image=rollup_image,
-            entrypoint=["/usr/local/bin/rollupcreator"],
-            cmd=["create-rollup-testnode"],
-            env_vars={
-                "PARENT_CHAIN_RPC": str(l1_rpc_url),
-                "PARENT_CHAIN_ID": str(l1_chain_id),
-                "CHILD_CHAIN_NAME": "arb-dev-test",
-                "MAX_DATA_SIZE": "117964",
-                "CHILD_CHAIN_CONFIG_PATH": "/config/l2_chain_config.json",
-                "CHAIN_DEPLOYMENT_INFO": "/config/deployment.json",
-                "CHILD_CHAIN_INFO": "/config/deployed_chain_info.json",
-            },
-            files={"/config": cfg_artifact},
-        ),
-    )
-
-    prepare_info = plan.add_service(
-        name="prepare-chain-info",
-        config=ServiceConfig(
-            image=seq_image,
-            entrypoint=["/bin/sh", "-lc"],
-            cmd=["jq '[.[]]' /config/deployed_chain_info.json > /config/l2_chain_info.json"],
-            files={"/config": cfg_artifact},
-        ),
-    )
 
 
     valnode_image = l2_args.get("validation_node", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
