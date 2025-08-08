@@ -25,10 +25,14 @@ def run(plan, args):
         name="arb-reth",
         config={
             "image": seq_image,
-            "cmd": ["/usr/local/bin/arb-reth", "--help"],  # TODO: replace with real args/flags and point to L1
+            "cmd": ["/usr/local/bin/arb-reth", "--help"],
             "ports": {
                 "rpc": {"number": seq_rpc, "protocol": "TCP"},
                 "p2p": {"number": seq_p2p, "protocol": "TCP"},
+            },
+            "env_vars": {
+                "L1_RPC_URL": str(l1_rpc_url),
+                "L1_CHAIN_ID": str(l1_network_id),
             },
         },
     )
