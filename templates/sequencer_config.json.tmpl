@@ -38,7 +38,7 @@
     },
     "block-validator": {
       "validation-server": {
-        "url": "http://validation-node:{{ .ValNodePort }}",
+        "url": "ws://validation-node:{{ .ValNodePort }}",
         "jwtsecret": "{{ .ValJwtSecret }}"
       }
     },
