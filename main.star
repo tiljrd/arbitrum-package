@@ -25,10 +25,21 @@ def run(plan, args):
         name="arb-reth",
         config={
             "image": seq_image,
-            "cmd": ["/usr/local/bin/arb-reth", "--help"],
+            "cmd": [
+                "/usr/local/bin/arb-reth",
+                "node",
+                "--chain", "dev",
+                "--http",
+                "--http.addr", "0.0.0.0",
+                "--http.port", str(seq_rpc),
+                "--authrpc.addr", "0.0.0.0",
+                "--authrpc.port", "8551",
+                "--rollup.compute-pending-block"
+            ],
             "ports": {
                 "rpc": {"number": seq_rpc, "protocol": "TCP"},
-                "p2p": {"number": seq_p2p, "protocol": "TCP"},
+                "engine": {"number": 8551, "protocol": "TCP"},
+                "p2p": {"number": seq_p2p, "protocol": "TCP"}
             },
             "env_vars": {
                 "L1_RPC_URL": str(l1_rpc_url),
@@ -45,8 +56,27 @@ def run(plan, args):
         name="arbnode",
         config={
             "image": arbnode_image,
-            "cmd": ["/bin/sh", "-lc", "sleep 3600"],  # TODO: replace with real startup and L1 wiring
-            "ports": {"rpc": {"number": arbnode_rpc, "protocol": "TCP"}},
+            "cmd": [
+                "/usr/local/bin/nitro",
+                "--http.addr", "0.0.0.0",
+                "--http.port", str(arbnode_rpc),
+                "--http.api", "net,web3,eth,txpool,debug,timeboost,auctioneer",
+                "--parent-chain.url", str(l1_rpc_url),
+                "--execution.engine", "http://arb-reth:8551",
+                "--execution.engine.auth", "",
+                "--node.sequencer", "true",
+                "--node.seq-coordinator.my-url", "http://arbnode:{}".format(arbnode_rpc),
+                "--node.feed.output.enable",
+                "--node.feed.output.port", "9642",
+                "--graphql.enable",
+                "--graphql.vhosts", "*",
+                "--graphql.corsdomain", "*"
+            ],
+            "ports": {
+                "rpc": {"number": arbnode_rpc, "protocol": "TCP"},
+                "feed": {"number": 9642, "protocol": "TCP"},
+                "graphql": {"number": 8548, "protocol": "TCP"}
+            },
             "env_vars": {
                 "L1_RPC_URL": str(l1_rpc_url),
                 "L1_CHAIN_ID": str(l1_network_id),
@@ -59,7 +89,15 @@ def run(plan, args):
         name="inbox-reader",
         config={
             "image": nitro_cfg.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
-            "cmd": ["/bin/sh", "-lc", "sleep 3600"],  # TODO
+            "cmd": [
+                "/usr/local/bin/nitro",
+                "--http.addr", "0.0.0.0",
+                "--parent-chain.url", str(l1_rpc_url),
+                "--node.rpc.addr", "http://arbnode:{}".format(arbnode_rpc),
+                "--node.inbox-reader", "true",
+                "--node.inbox-reader.block-range", "256",
+                "--node.inbox-reader.read-mode", "latest"
+            ],
             "env_vars": {
                 "L1_RPC_URL": str(l1_rpc_url),
                 "L1_CHAIN_ID": str(l1_network_id),
@@ -70,7 +108,15 @@ def run(plan, args):
         name="batch-poster",
         config={
             "image": nitro_cfg.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
-            "cmd": ["/bin/sh", "-lc", "sleep 3600"],  # TODO
+            "cmd": [
+                "/usr/local/bin/nitro",
+                "--http.addr", "0.0.0.0",
+                "--parent-chain.url", str(l1_rpc_url),
+                "--node.rpc.addr", "http://arbnode:{}".format(arbnode_rpc),
+                "--node.batch-poster", "true",
+                "--node.batch-poster.max-delay", "3s",
+                "--node.batch-poster.max-tx-data-size", "120000",
+            ],
             "env_vars": {
                 "L1_RPC_URL": str(l1_rpc_url),
                 "L1_CHAIN_ID": str(l1_network_id),
