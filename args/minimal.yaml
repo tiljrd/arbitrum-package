@@ -1,10 +1,5 @@
 
-l1:
-  chain: anvil
-  accounts:
-    - mnemonic: "test test test test test test test test test test test junk"
-      balance_eth: "1000"
-  rpc_port: 8545
+ethereum_package: {}
 
 l2:
   chain_id: 42161

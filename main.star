@@ -1,27 +1,21 @@
-# Arbitrum Kurtosis package using arb-reth + Nitro components (scaffold)
+# Arbitrum Kurtosis package using arb-reth + Nitro components (wired to ethereum package for L1)
+
+ethereum_package = import_module("github.com/LZeroAnalytics/ethereum-package/main.star")
 
 def run(plan, args):
-    plan.print("Starting Arbitrum package scaffold")
+    plan.print("Starting Arbitrum package (ethereum package for L1)")
 
-    # Parse args (minimal)
-    l1_cfg = args.get("l1", {})
+    eth_pkg_args = args.get("ethereum_package", {})
     l2_cfg = args.get("l2", {})
     nitro_cfg = args.get("nitro", {})
 
-    # TODO: networks and subnets as needed
-    # net = plan.create_network("arbitrum-net")
-
-    # L1 dev chain (anvil/geth) placeholder
-    # TODO: switch to geth if preferred; expose rpc port.
-    l1_svc = plan.add_service(
-        name="l1",
-        config={
-            "image": "ghcr.io/foundry-rs/foundry:latest",
-            "cmd": ["/bin/sh", "-lc", "anvil --host 0.0.0.0 --port {}".format(l1_cfg.get("rpc_port", 8545))],
-            "ports": {"rpc": {"number": l1_cfg.get("rpc_port", 8545), "protocol": "TCP"}},
-        },
-    )
-    plan.print("L1 service added: {}".format(l1_svc))
+    # Launch L1 via ethereum package, mirroring optimism-package
+    plan.print("Deploying a local L1 using ethereum package")
+    l1 = ethereum_package.run(plan, eth_pkg_args)
+    all_l1_participants = l1.all_participants
+    l1_network_params = l1.network_params
+    l1_network_id = l1.network_id
+    l1_rpc_url = all_l1_participants[0].el_context.rpc_http_url
 
     # Sequencer with arb-reth local image placeholder
     seq_image = l2_cfg.get("sequencer", {}).get("image", "arb-reth:local")
@@ -31,7 +25,7 @@ def run(plan, args):
         name="arb-reth",
         config={
             "image": seq_image,
-            "cmd": ["/usr/local/bin/arb-reth", "--help"],  # TODO: replace with real args/flags
+            "cmd": ["/usr/local/bin/arb-reth", "--help"],  # TODO: replace with real args/flags and point to L1
             "ports": {
                 "rpc": {"number": seq_rpc, "protocol": "TCP"},
                 "p2p": {"number": seq_p2p, "protocol": "TCP"},
@@ -47,7 +41,7 @@ def run(plan, args):
         name="arbnode",
         config={
             "image": arbnode_image,
-            "cmd": ["/bin/sh", "-lc", "sleep 3600"],  # TODO: replace with real startup
+            "cmd": ["/bin/sh", "-lc", "sleep 3600"],  # TODO: replace with real startup and L1 wiring
             "ports": {"rpc": {"number": arbnode_rpc, "protocol": "TCP"}},
         },
     )
@@ -69,12 +63,13 @@ def run(plan, args):
     )
     plan.print("Inbox reader and batch poster added.")
 
-    # TODO: health checks, environment wiring, contract deployment, exporting endpoints
-    plan.print("Scaffold complete. Replace sleep commands with real startup scripts and wire env/configs.")
+    # TODO: replace sleeps with real commands and wire env for L1/L2 connectivity
+    plan.print("Scaffold complete. Wire arb-reth/arbnode/inbox/batch to L1 RPC and rollup configs.")
 
     return {
         "success": True,
-        "l1_rpc": "http://l1:{}".format(l1_cfg.get("rpc_port", 8545)),
+        "l1_rpc": str(l1_rpc_url),
         "l2_rpc": "http://arb-reth:{}".format(seq_rpc),
         "arbnode_rpc": "http://arbnode:{}".format(arbnode_rpc),
+        "l1_chain_id": str(l1_network_id),
     }
