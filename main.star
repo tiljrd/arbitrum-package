@@ -1,137 +1,167 @@
-# Arbitrum Kurtosis package using arb-reth + Nitro components (wired to ethereum package for L1)
-
 ethereum_package = import_module("github.com/ethpandaops/ethereum-package/main.star")
+config_mod = import_module("./src/config.star")
 
-def run(plan, args):
-    plan.print("Starting Arbitrum package (ethereum package for L1)")
+def run(plan, args={}):
+    ethereum_args = args.get("ethereum_package", {})
+    l2_args = args.get("l2", {})
+    logging_args = args.get("logging", {})
 
-    eth_pkg_args = args.get("ethereum_package", {})
-    l2_cfg = args.get("l2", {})
-    nitro_cfg = args.get("nitro", {})
-
-    # Launch L1 via ethereum package, mirroring optimism-package
-    plan.print("Deploying a local L1 using ethereum package")
-    l1 = ethereum_package.run(plan, eth_pkg_args)
+    l1 = ethereum_package.run(plan, ethereum_args)
     all_l1_participants = l1.all_participants
-    l1_network_params = l1.network_params
-    l1_network_id = l1.network_id
     l1_rpc_url = all_l1_participants[0].el_context.rpc_http_url
+    l1_ws_url = all_l1_participants[0].el_context.ws_url
+    l1_cl_url = all_l1_participants[0].cl_context.beacon_http_url
+    l1_chain_id = l1.network_id
 
-    # Sequencer with arb-reth local image placeholder
-    seq_image = l2_cfg.get("sequencer", {}).get("image", "arb-reth:local")
-    seq_rpc = l2_cfg.get("sequencer", {}).get("rpc_port", 8547)
-    seq_p2p = l2_cfg.get("sequencer", {}).get("p2p_port", 30303)
-    arb_reth = plan.add_service(
-        name="arb-reth",
+    l1_env = {
+        "L1_RPC_KIND": "standard",
+        "WEB3_RPC_URL": str(l1_rpc_url),
+        "L1_RPC_URL": str(l1_rpc_url),
+        "CL_RPC_URL": str(l1_cl_url),
+        "L1_WS_URL": str(l1_ws_url),
+        "L1_CHAIN_ID": str(l1_chain_id),
+    }
+
+    cfg_artifact = config_mod.write_configs(plan, l1_env, l2_args)
+    # Pre-deploy L2 rollup using nitro-testnode helper images
+    scripts_image = l2_args.get("scripts", {}).get("image", "nitro-testnode-scripts:local")
+    rollup_image = l2_args.get("rollupcreator", {}).get("image", "nitro-testnode-rollupcreator:local")
+
+    scripts = plan.add_service(
+        name="scripts",
+        config=ServiceConfig(
+            image=scripts_image,
+            files={"/config": cfg_artifact},
+        ),
+    )
+
+    rollupcreator = plan.add_service(
+        name="rollupcreator",
+        config=ServiceConfig(
+            image=rollup_image,
+            entrypoint=["/usr/local/bin/rollupcreator"],
+            cmd=["create-rollup-testnode"],
+            env_vars={
+                "PARENT_CHAIN_RPC": str(l1_rpc_url),
+                "PARENT_CHAIN_ID": str(l1_chain_id),
+                "CHILD_CHAIN_NAME": "arb-dev-test",
+                "MAX_DATA_SIZE": "117964",
+                "CHILD_CHAIN_CONFIG_PATH": "/config/l2_chain_config.json",
+                "CHAIN_DEPLOYMENT_INFO": "/config/deployment.json",
+                "CHILD_CHAIN_INFO": "/config/deployed_chain_info.json",
+            },
+            files={"/config": cfg_artifact},
+        ),
+    )
+
+    prepare_info = plan.add_service(
+        name="prepare-chain-info",
         config=ServiceConfig(
             image=seq_image,
-            cmd= [
-                "/usr/local/bin/arb-reth",
-                "node",
-                "--chain", "dev",
-                "--http",
-                "--http.addr", "0.0.0.0",
-                "--http.port", str(seq_rpc),
-                "--authrpc.addr", "0.0.0.0",
-                "--authrpc.port", "8551",
-                "--rollup.compute-pending-block"
-            ],
-            ports = {
-                "rpc": PortSpec(number = seq_rpc, transport_protocol = "TCP"),
-                "engine": PortSpec(number = 8551, transport_protocol = "TCP"),
-                "p2p": PortSpec(number = seq_p2p, transport_protocol = "TCP")
-            },
-            env_vars = {
-                "L1_RPC_URL": str(l1_rpc_url),
-                "L1_CHAIN_ID": str(l1_network_id),
-            }
-        )
+            entrypoint=["/bin/sh", "-lc"],
+            cmd=["jq '[.[]]' /config/deployed_chain_info.json > /config/l2_chain_info.json"],
+            files={"/config": cfg_artifact},
+        ),
     )
-    plan.print("Sequencer service added: {}".format(arb_reth))
 
-    # Nitro components placeholders
-    arbnode_image = nitro_cfg.get("arbnode", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
-    arbnode_rpc = nitro_cfg.get("arbnode", {}).get("rpc_port", 8549)
-    arbnode = plan.add_service(
-        name="arbnode",
+
+    valnode_image = l2_args.get("validation_node", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
+    valnode_port = int(l2_args.get("validation_node", {}).get("port", 8549))
+    validation_node = plan.add_service(
+        name="validation-node",
         config=ServiceConfig(
-            image=arbnode_image,
-            cmd=[
-                "/usr/local/bin/nitro",
-                "--http.addr", "0.0.0.0",
-                "--http.port", str(arbnode_rpc),
-                "--http.api", "net,web3,eth,txpool,debug,timeboost,auctioneer",
-                "--parent-chain.url", str(l1_rpc_url),
-                "--execution.engine", "http://arb-reth:8551",
-                "--execution.engine.auth", "",
-                "--node.sequencer", "true",
-                "--node.seq-coordinator.my-url", "http://arbnode:{}".format(arbnode_rpc),
-                "--node.feed.output.enable",
-                "--node.feed.output.port", "9642",
-                "--graphql.enable",
-                "--graphql.vhosts", "*",
-                "--graphql.corsdomain", "*"
-            ],
+            image=valnode_image,
+            entrypoint=["/usr/local/bin/nitro-val"],
+            cmd=["--conf.file=/config/validation_node_config.json"],
+            files={"/config": cfg_artifact},
             ports={
-                "rpc": PortSpec(number=arbnode_rpc, transport_protocol="TCP"),
-                "feed": PortSpec(number=9642, transport_protocol="TCP"),
-                "graphql": PortSpec(number=8548, transport_protocol="TCP"),
-            },
-            env_vars={
-                "L1_RPC_URL": str(l1_rpc_url),
-                "L1_CHAIN_ID": str(l1_network_id),
+                "rpc": PortSpec(number=valnode_port, transport_protocol="TCP"),
             },
         ),
     )
-    plan.print("Arbnode service added: {}".format(arbnode))
 
+    seq_image = l2_args.get("sequencer", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
+    seq_rpc = int(l2_args.get("sequencer", {}).get("rpc_port", 8547))
+    seq_ws = int(l2_args.get("sequencer", {}).get("ws_port", 8548))
+    seq_feed = int(l2_args.get("sequencer", {}).get("feed_port", 9642))
+    sequencer = plan.add_service(
+        name="sequencer",
+        config=ServiceConfig(
+            image=seq_image,
+            entrypoint=["/usr/local/bin/nitro"],
+            cmd=[
+                "--conf.file=/config/sequencer_config.json",
+                "--node.feed.output.enable",
+                "--node.feed.output.port={}".format(seq_feed),
+                "--http.api=net,web3,eth,txpool,debug,auctioneer",
+                "--graphql.enable",
+                "--graphql.vhosts=*",
+                "--graphql.corsdomain=*",
+            ],
+            files={"/config": cfg_artifact},
+            ports={
+                "rpc": PortSpec(number=seq_rpc, transport_protocol="TCP"),
+                "ws": PortSpec(number=seq_ws, transport_protocol="TCP"),
+                "feed": PortSpec(number=seq_feed, transport_protocol="TCP"),
+            },
+        ),
+    )
+
+    inbox_image = l2_args.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
     inbox_reader = plan.add_service(
         name="inbox-reader",
         config=ServiceConfig(
-            image=nitro_cfg.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
+            image=inbox_image,
+            entrypoint=["/usr/local/bin/nitro"],
             cmd=[
-                "/usr/local/bin/nitro",
-                "--http.addr", "0.0.0.0",
-                "--parent-chain.url", str(l1_rpc_url),
-                "--node.rpc.addr", "http://arbnode:{}".format(arbnode_rpc),
-                "--node.inbox-reader", "true",
-                "--node.inbox-reader.block-range", "256",
-                "--node.inbox-reader.read-mode", "latest"
+                "--conf.file=/config/inbox_reader_config.json",
+                "--node.inbox-reader=true",
             ],
-            env_vars={
-                "L1_RPC_URL": str(l1_rpc_url),
-                "L1_CHAIN_ID": str(l1_network_id),
-            },
+            files={"/config": cfg_artifact},
         ),
     )
+
+    poster_image = l2_args.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
     batch_poster = plan.add_service(
         name="batch-poster",
         config=ServiceConfig(
-            image=nitro_cfg.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
+            image=poster_image,
+            entrypoint=["/usr/local/bin/nitro"],
             cmd=[
-                "/usr/local/bin/nitro",
-                "--http.addr", "0.0.0.0",
-                "--parent-chain.url", str(l1_rpc_url),
-                "--node.rpc.addr", "http://arbnode:{}".format(arbnode_rpc),
-                "--node.batch-poster", "true",
-                "--node.batch-poster.max-delay", "3s",
-                "--node.batch-poster.max-tx-data-size", "120000",
+                "--conf.file=/config/poster_config.json",
             ],
-            env_vars={
-                "L1_RPC_URL": str(l1_rpc_url),
-                "L1_CHAIN_ID": str(l1_network_id),
-            },
+            files={"/config": cfg_artifact},
         ),
     )
-    plan.print("Inbox reader and batch poster added.")
 
-    # TODO: replace sleeps with real commands and wire env for L1/L2 connectivity
-    plan.print("Scaffold complete. Wire arb-reth/arbnode/inbox/batch to L1 RPC and rollup configs.")
+    use_validator = bool(l2_args.get("use_validator", True))
+    validator_rpc = ""
+    if use_validator:
+        val_image = l2_args.get("validator", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
+        val_rpc = int(l2_args.get("validator", {}).get("rpc_port", 8247))
+        val_ws = int(l2_args.get("validator", {}).get("ws_port", 8248))
+        plan.add_service(
+            name="validator",
+            config=ServiceConfig(
+                image=val_image,
+                entrypoint=["/usr/local/bin/nitro"],
+                cmd=[
+                    "--conf.file=/config/validator_config.json",
+                    "--http.api=net,web3,arb,debug",
+                ],
+                files={"/config": cfg_artifact},
+                ports={
+                    "rpc": PortSpec(number=val_rpc, transport_protocol="TCP"),
+                    "ws": PortSpec(number=val_ws, transport_protocol="TCP"),
+                },
+            ),
+        )
+        validator_rpc = "http://validator:{}".format(val_rpc)
 
     return {
-        "success": True,
-        "l1_rpc": str(l1_rpc_url),
-        "l2_rpc": "http://arb-reth:{}".format(seq_rpc),
-        "arbnode_rpc": "http://arbnode:{}".format(arbnode_rpc),
-        "l1_chain_id": str(l1_network_id),
+        "l1_rpc_url": str(l1_rpc_url),
+        "l1_chain_id": str(l1_chain_id),
+        "l2_rpc_url": "http://sequencer:{}".format(seq_rpc),
+        "validation_api_url": "http://validation-node:{}".format(valnode_port),
+        "validator_rpc_url": validator_rpc,
     }

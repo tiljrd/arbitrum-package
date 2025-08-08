@@ -1,0 +1,56 @@
+{
+  "ensure-rollup-deployment": false,
+  "parent-chain": {
+    "id": {{ .L1ChainID }},
+    "connection": {
+      "url": "{{ .L1RPCURL }}"
+    }
+  },
+  "chain": {
+    "id": {{ .ChainID }},
+    "info-files": ["/config/l2_chain_info.json"]
+  },
+  "node": {
+    "bold": {
+      "rpc-block-number": "latest",
+      "strategy": "makeNodes",
+      "assertion-posting-interval": "10s"
+    },
+    "staker": {
+      "dangerous": { "without-block-validator": false },
+      "disable-challenge": false,
+      "enable": false,
+      "staker-interval": "10s",
+      "make-assertion-interval": "10s",
+      "strategy": "MakeNodes"
+    },
+    "sequencer": false,
+    "dangerous": {
+      "no-sequencer-coordinator": false,
+      "disable-blob-reader": true
+    },
+    "delayed-sequencer": { "enable": false },
+    "seq-coordinator": { "enable": false, "redis-url": "" },
+    "batch-poster": {
+      "enable": false,
+      "redis-url": ""
+    },
+    "block-validator": {
+      "validation-server": {
+        "url": "ws://validation-node:{{ .ValNodePort }}",
+        "jwtsecret": "{{ .ValJwtSecret }}"
+      }
+    },
+    "inbox-reader": { "enable": true },
+    "data-availability": {
+      "enable": false
+    }
+  },
+  "execution": {
+    "sequencer": { "enable": false },
+    "forwarding-target": "null"
+  },
+  "persistent": { "chain": "local" },
+  "ws": { "addr": "0.0.0.0" },
+  "http": { "addr": "0.0.0.0", "vhosts": "*", "corsdomain": "*" }
+}

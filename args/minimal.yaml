@@ -4,18 +4,22 @@ ethereum_package: {}
 l2:
   chain_id: 42161
   sequencer:
-    image: "arb-reth:local"
+    image: "offchainlabs/nitro-node-dev-testnode:latest"
     rpc_port: 8547
-    p2p_port: 30303
-
-nitro:
-  arbnode:
-    image: "ghcr.io/offchainlabs/nitro:latest"
-    rpc_port: 8549
+    ws_port: 8548
+    feed_port: 9642
+  validator:
+    image: "offchainlabs/nitro-node-dev-testnode:latest"
+    rpc_port: 8247
+    ws_port: 8248
   batch_poster:
-    image: "ghcr.io/offchainlabs/nitro:latest"
+    image: "offchainlabs/nitro-node-dev-testnode:latest"
   inbox_reader:
-    image: "ghcr.io/offchainlabs/nitro:latest"
+    image: "offchainlabs/nitro-node-dev-testnode:latest"
+  validation_node:
+    image: "offchainlabs/nitro-node-dev-testnode:latest"
+    port: 8549
+  use_validator: true
 
 logging:
   level: "info"
