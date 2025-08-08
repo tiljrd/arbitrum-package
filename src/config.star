@@ -16,6 +16,7 @@ def write_configs(plan, l1_config, l2_args):
         ValRPC=int(validator.get("rpc_port", 8247)),
         ValWS=int(validator.get("ws_port", 8248)),
         ValNodePort=int(validation_node.get("port", 8549)),
+        ValJwtSecret="devinlocaljwt",
     )
 
     artifact = plan.render_templates(
