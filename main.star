@@ -66,11 +66,15 @@ def run(plan, args):
                 "--execution.engine.auth", "",
                 "--node.sequencer", "true",
                 "--node.feed.output.enable",
-                "--node.feed.output.port", "9642"
+                "--node.feed.output.port", "9642",
+                "--graphql.enable",
+                "--graphql.vhosts", "*",
+                "--graphql.corsdomain", "*"
             ],
             "ports": {
                 "rpc": {"number": arbnode_rpc, "protocol": "TCP"},
-                "feed": {"number": 9642, "protocol": "TCP"}
+                "feed": {"number": 9642, "protocol": "TCP"},
+                "graphql": {"number": 8548, "protocol": "TCP"}
             },
             "env_vars": {
                 "L1_RPC_URL": str(l1_rpc_url),
