@@ -57,10 +57,10 @@ def run(plan, args):
         config={
             "image": arbnode_image,
             "cmd": [
-                "/usr/local/bin/arbnode",
+                "/usr/local/bin/nitro",
                 "--http.addr", "0.0.0.0",
                 "--http.port", str(arbnode_rpc),
-                "--l1.url", str(l1_rpc_url),
+                "--parent-chain.url", str(l1_rpc_url),
                 "--execution.engine", "http://arb-reth:8551",
                 "--execution.engine.auth", "",
                 "--node.sequencer", "true"
@@ -79,9 +79,10 @@ def run(plan, args):
         config={
             "image": nitro_cfg.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
             "cmd": [
-                "/usr/local/bin/inbox-reader",
-                "--l1.url", str(l1_rpc_url),
-                "--node.url", "http://arbnode:{}".format(arbnode_rpc)
+                "/usr/local/bin/nitro",
+                "--parent-chain.url", str(l1_rpc_url),
+                "--node.rpc.addr", "http://arbnode:{}".format(arbnode_rpc),
+                "--node.inbox-reader", "true"
             ],
             "env_vars": {
                 "L1_RPC_URL": str(l1_rpc_url),
@@ -94,9 +95,10 @@ def run(plan, args):
         config={
             "image": nitro_cfg.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest"),
             "cmd": [
-                "/usr/local/bin/batch-poster",
-                "--l1.url", str(l1_rpc_url),
-                "--node.url", "http://arbnode:{}".format(arbnode_rpc)
+                "/usr/local/bin/nitro",
+                "--parent-chain.url", str(l1_rpc_url),
+                "--node.rpc.addr", "http://arbnode:{}".format(arbnode_rpc),
+                "--node.batch-poster", "true"
             ],
             "env_vars": {
                 "L1_RPC_URL": str(l1_rpc_url),
