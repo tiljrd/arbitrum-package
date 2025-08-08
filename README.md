@@ -8,7 +8,7 @@ This Kurtosis package launches a minimal Arbitrum stack using:
 Status: scaffold; wiring will evolve as arb-reth implementation completes.
 
 Using the ethereum package for L1
-- This package is designed to use the ethereum package to spin up a minimal L1. The args/minimal.yaml describes basic ports/images. Wiring to the ethereum package is coming next as arb-reth Docker integration lands. For now, the scaffold uses a local anvil placeholder to allow fast iteration.
+- This package uses the ethereum package to spin up a minimal L1. The args/minimal.yaml contains an `ethereum_package: {}` block that is passed directly to the ethereum package’s `run()` method, mirroring the optimism-package import/launch pattern.
 
 Build arb-reth Docker image locally
 - From the reth repo root:
@@ -24,7 +24,7 @@ Run the package
   - kurtosis run --enclave test . --args-file args/minimal.yaml
 
 View logs and endpoints
-- L1 RPC: http://l1:8545 (placeholder; will be ethereum package’s L1 endpoint once wired)
+- L1 RPC: Returned from the ethereum package outputs (printed at the end of `kurtosis run` as `l1_rpc`).d)
 - L2 RPC (arb-reth): http://arb-reth:8547
 - Arbnode RPC: http://arbnode:8549
 - Logs:
@@ -35,9 +35,9 @@ View logs and endpoints
   - kurtosis service logs test batch-poster
 
 Next steps
-- Replace the anvil placeholder with explicit wiring to the ethereum package (import-package pattern)
-- Add startup scripts/args for arbnode, inbox-reader, and batch-poster to connect to L1 and arb-reth
+- Add startup scripts/args for arbnode, inbox-reader, and batch-poster to connect to L1 and arb-reth (replace current sleep commands)
 - Validate eth_blockNumber increases on L2 and that L1 batch submissions appear in Nitro logs
+- Build and use a local arb-reth Docker image (see below) so the sequencer can start producing L2 blocks
 
 # Arbitrum Kurtosis Package (arb-reth)
 
