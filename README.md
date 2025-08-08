@@ -8,8 +8,8 @@ This Kurtosis package launches a local Arbitrum test network using:
 - Optional DAS components depending on config
 
 Status:
-- Initial scaffolding for the package. Integration with arb-reth and Nitro services will follow.
-- The arb-reth Docker image is built from tiljrd/reth with crates/arbitrum/bin/Dockerfile.
+- Initial scaffolding is in place; services are placeholders that will be wired with real configs.
+- The arb-reth Dockerfile clones tiljrd/arb-alloy into the builder image to satisfy path deps.
 
 Prereqs:
 - Docker
@@ -23,6 +23,8 @@ Prereqs:
 Build the arb-reth image locally:
 - From tiljrd/reth:
   docker build -t arb-reth:local -f crates/arbitrum/bin/Dockerfile .
+  Note: Current build is blocked by a c-kzg native library version conflict inside the container (revm-precompile vs reth-primitives).
+  Once c-kzg versions are aligned in the workspace, this build should succeed.
 
 Run:
 - Clean previous enclaves:
@@ -30,13 +32,13 @@ Run:
 - Execute with arguments:
   kurtosis run --enclave test . --args-file ./args/minimal.yaml
 
-Verify:
+Verify (once services are fully wired):
 - L2 RPC responds and eth_blockNumber increases.
 - Nitro batch poster submits to L1 (logs).
 - Retryable operations via ArbSys/ArbRetryableTx succeed.
 
-Notes:
-- This package will be expanded to include:
-  - networks: single-sequencer minimal, multi-node
-  - configuration for L1 chain, contract deploy, and poster credentials
-  - documentation on any Nitro changes needed to work with arb-reth
+Next steps (planned):
+- Wire real service startup commands and env vars for arbnode, inbox-reader, and batch-poster
+- Expose and connect endpoints across services
+- Integrate contract deployment/init as needed
+- Add more args-file presets beyond minimal

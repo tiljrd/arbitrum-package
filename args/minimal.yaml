@@ -1,0 +1,26 @@
+
+l1:
+  chain: anvil
+  accounts:
+    - mnemonic: "test test test test test test test test test test test junk"
+      balance_eth: "1000"
+  rpc_port: 8545
+
+l2:
+  chain_id: 42161
+  sequencer:
+    image: "arb-reth:local"
+    rpc_port: 8547
+    p2p_port: 30303
+
+nitro:
+  arbnode:
+    image: "ghcr.io/offchainlabs/nitro:latest"
+    rpc_port: 8549
+  batch_poster:
+    image: "ghcr.io/offchainlabs/nitro:latest"
+  inbox_reader:
+    image: "ghcr.io/offchainlabs/nitro:latest"
+
+logging:
+  level: "info"
