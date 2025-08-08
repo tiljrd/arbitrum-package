@@ -1,0 +1,9 @@
+{
+  "l2": { "chain_id": "{{ .ChainID }}" },
+  "parent_chain": { "rpc": { "url": "{{ .L1RPCURL }}" } },
+  "node": {
+    "rpc": { "addr": "0.0.0.0", "port": {{ .ValRPC }} },
+    "ws": { "addr": "0.0.0.0", "port": {{ .ValWS }} }
+  },
+  "validation": { "url": "http://validation-node:{{ .ValNodePort }}" }
+}

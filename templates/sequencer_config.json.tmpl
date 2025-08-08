@@ -1,0 +1,9 @@
+{
+  "l2": { "chain_id": "{{ .ChainID }}" },
+  "parent_chain": { "rpc": { "url": "{{ .L1RPCURL }}" } },
+  "node": {
+    "rpc": { "addr": "0.0.0.0", "port": {{ .SeqRPC }} },
+    "ws": { "addr": "0.0.0.0", "port": {{ .SeqWS }} },
+    "feed": { "output": { "enable": true, "port": {{ .SeqFeed }} } }
+  }
+}
