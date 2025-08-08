@@ -25,10 +25,21 @@ def run(plan, args):
         name="arb-reth",
         config={
             "image": seq_image,
-            "cmd": ["/usr/local/bin/arb-reth", "--help"],
+            "cmd": [
+                "/usr/local/bin/arb-reth",
+                "node",
+                "--chain", "dev",
+                "--http",
+                "--http.addr", "0.0.0.0",
+                "--http.port", str(seq_rpc),
+                "--authrpc.addr", "0.0.0.0",
+                "--authrpc.port", "8551",
+                "--rollup.compute-pending-block"
+            ],
             "ports": {
                 "rpc": {"number": seq_rpc, "protocol": "TCP"},
-                "p2p": {"number": seq_p2p, "protocol": "TCP"},
+                "engine": {"number": 8551, "protocol": "TCP"},
+                "p2p": {"number": seq_p2p, "protocol": "TCP"}
             },
             "env_vars": {
                 "L1_RPC_URL": str(l1_rpc_url),
