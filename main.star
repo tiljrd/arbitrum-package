@@ -131,8 +131,6 @@ def run(plan, args={}):
         )
         validator_rpc = "http://validator:{}".format(val_rpc)
 
-    return {
-        "l1_rpc_url": str(l1_rpc_url),
     bs_output = {}
     if bool(blockscout_args.get("enabled", False)):
         network_name = str(l2_args.get("name", "ArbitrumLocal"))
@@ -162,6 +160,8 @@ def run(plan, args={}):
             ethereum_args=ethereum_cfg,
         )
 
+    return {
+        "l1_rpc_url": str(l1_rpc_url),
         "l1_chain_id": str(l1_chain_id),
         "l2_rpc_url": "http://sequencer:{}".format(seq_rpc),
         "validation_api_url": "http://validation-node:{}".format(valnode_port),
