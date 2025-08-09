@@ -108,6 +108,7 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         name="arb-deploy-step5a-deploy-templates",
         description="Deploy nitro contracts and set templates",
         image="node:20-bookworm",
+        timeout="20m",
         env_vars=dict(env, **{
             "CUSTOM_RPC_URL": l1_env["L1_RPC_URL"],
             "DISABLE_VERIFICATION": "true",
@@ -133,6 +134,7 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         name="arb-deploy-step5b-create-rollup",
         description="Create rollup using RollupCreator",
         image="node:20-bookworm",
+        timeout="20m",
         env_vars=dict(env, **{
             "CUSTOM_RPC_URL": l1_env["L1_RPC_URL"],
             "DISABLE_VERIFICATION": "true",
