@@ -15,6 +15,10 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
                 L1RPCURL=l1_env["L1_RPC_URL"],
                 L1ChainID=l1_env["L1_CHAIN_ID"],
             )),
+            # Provide a minimal scripts/config.ts to satisfy nitro-contracts imports
+            "scripts/config.ts": struct(template=read_file("../templates/config.ts.tmpl"), data=struct(
+                ChainID=chain_id,
+            )),
         },
     )
 
@@ -54,6 +58,8 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
             "/root/.foundry/bin/foundryup",
             "yarn build:forge:yul || true",
             "yarn build || yarn run build || true",
+            # Copy our rendered config into scripts/ so rollupCreation.ts can import it
+            "cp /deploy/scripts/config.ts /src/scripts/config.ts",
             "yarn run create-rollup-testnode",
             "cp /deploy/deployed_chain_info.json /deploy/l2_chain_info.json"
         ]),
