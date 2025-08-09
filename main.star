@@ -64,6 +64,7 @@ def run(plan, args={}):
             entrypoint=["/usr/local/bin/nitro"],
             cmd=[
                 "--conf.file=/config/sequencer_config.json",
+                "--node.parent-chain-reader.use-finality-data=false",
                 "--node.feed.output.enable",
                 "--node.feed.output.port={}".format(seq_feed),
                 "--http.api=net,web3,eth,txpool,debug,auctioneer",
@@ -88,6 +89,7 @@ def run(plan, args={}):
             entrypoint=["/usr/local/bin/nitro"],
             cmd=[
                 "--conf.file=/config/inbox_reader_config.json",
+                "--node.parent-chain-reader.use-finality-data=false",
             ],
             files={"/config": cfg_artifact, "/deploy": deploy_artifact},
         ),
@@ -101,6 +103,8 @@ def run(plan, args={}):
             entrypoint=["/usr/local/bin/nitro"],
             cmd=[
                 "--conf.file=/config/poster_config.json",
+                "--node.parent-chain-reader.use-finality-data=false",
+                "--node.batch-poster.l1-block-bound=latest",
             ],
             files={"/config": cfg_artifact, "/deploy": deploy_artifact},
         ),
