@@ -33,7 +33,10 @@
     "seq-coordinator": { "enable": true, "redis-url": "" },
     "batch-poster": {
       "enable": true,
-      "redis-url": ""
+      "redis-url": "",
+      "parent-chain-wallet": {
+        "private-key": "{{ .L1PrivKey }}"
+      }
     },
     "block-validator": {
       "validation-server": {

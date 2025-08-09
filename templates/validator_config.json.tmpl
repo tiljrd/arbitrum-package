@@ -22,7 +22,10 @@
       "enable": true,
       "staker-interval": "10s",
       "make-assertion-interval": "10s",
-      "strategy": "MakeNodes"
+      "strategy": "MakeNodes",
+      "parent-chain-wallet": {
+        "private-key": "{{ .L1PrivKey }}"
+      }
     },
     "sequencer": false,
     "dangerous": {

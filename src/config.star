@@ -1,10 +1,14 @@
-def write_configs(plan, l1_config, l2_args):
+def write_configs(plan, l1_config, l2_args, l1_priv_key):
     chain_id = str(l2_args.get("chain_id", 42161))
     l1_rpc_url = str(l1_config.get("L1_RPC_URL"))
     l1_chain_id = str(l1_config.get("L1_CHAIN_ID"))
     sequencer = l2_args.get("sequencer", {})
     validator = l2_args.get("validator", {})
     validation_node = l2_args.get("validation_node", {})
+
+    key = str(l1_priv_key)
+    if key.startswith("0x") or key.startswith("0X"):
+        key = key[2:]
 
     data = struct(
         ChainID=chain_id,
@@ -17,6 +21,7 @@ def write_configs(plan, l1_config, l2_args):
         ValWS=int(validator.get("ws_port", 8248)),
         ValNodePort=int(validation_node.get("port", 8549)),
         ValJwtSecret="/config/val_jwt.hex",
+        L1PrivKey=key,
     )
 
     artifact = plan.render_templates(
