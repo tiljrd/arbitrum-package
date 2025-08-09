@@ -37,33 +37,101 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
     if owner_addr:
         env["OWNER_ADDRESS"] = str(owner_addr)
 
-    out = plan.run_sh(
-        name="arb-rollup-deploy",
-        description="Deploy Arbitrum rollup and produce l2_chain_info.json",
+    # Step 1: base tools + clone repo
+    step1 = plan.run_sh(
+        name="arb-deploy-step1-clone",
+        description="Install base tools and clone nitro-contracts",
         image="node:20-bookworm",
-        env_vars=env,
-        files={
-            "/deploy": deploy_files,
-            "/config": config_artifact,
-        },
+        files={"/deploy": deploy_files},
         run=" && ".join([
             "set -e",
             "apt-get update && apt-get install -y git jq python3 build-essential curl ca-certificates pkg-config libssl-dev",
             "corepack enable",
             "git clone --depth 1 --branch v3.1.0 https://github.com/OffchainLabs/nitro-contracts.git /src",
+            "cp /deploy/scripts/config.ts /src/scripts/config.ts",
+        ]),
+        store=[StoreSpec(src="/src", name="arb-deploy-src")],
+    )
+    src_art = step1.files_artifacts[0]
+
+    # Step 2: yarn install
+    step2 = plan.run_sh(
+        name="arb-deploy-step2-yarn-install",
+        description="Install JS dependencies",
+        image="node:20-bookworm",
+        files={"/src": src_art},
+        run=" && ".join([
+            "set -e",
             "cd /src",
             "yarn install --frozen-lockfile || yarn install",
+        ]),
+        store=[StoreSpec(src="/src", name="arb-deploy-src")],
+    )
+    src_art = step2.files_artifacts[0]
+
+    # Step 3: install foundry and build yul
+    step3 = plan.run_sh(
+        name="arb-deploy-step3-foundry",
+        description="Install Foundry and build YUL artifacts",
+        image="node:20-bookworm",
+        files={"/src": src_art},
+        run=" && ".join([
+            "set -e",
             "curl -L https://foundry.paradigm.xyz | bash",
             ". /root/.bashrc || true",
             "/root/.foundry/bin/foundryup",
+            "cd /src",
             "yarn build:forge:yul || true",
+        ]),
+        store=[StoreSpec(src="/src", name="arb-deploy-src")],
+    )
+    src_art = step3.files_artifacts[0]
+
+    # Step 4: build contracts
+    step4 = plan.run_sh(
+        name="arb-deploy-step4-build",
+        description="Build nitro-contracts",
+        image="node:20-bookworm",
+        files={"/src": src_art},
+        run=" && ".join([
+            "set -e",
+            "cd /src",
             "yarn build || yarn run build || true",
-            "cp /deploy/scripts/config.ts /src/scripts/config.ts",
+        ]),
+        store=[StoreSpec(src="/src", name="arb-deploy-src")],
+    )
+    src_art = step4.files_artifacts[0]
+
+    # Step 5: run create-rollup-testnode
+    step5 = plan.run_sh(
+        name="arb-deploy-step5-create-rollup",
+        description="Run create-rollup-testnode",
+        image="node:20-bookworm",
+        env_vars=env,
+        files={
+            "/src": src_art,
+            "/deploy": deploy_files,
+            "/config": config_artifact,
+        },
+        run=" && ".join([
+            "set -e",
+            "cd /src",
             "yarn run create-rollup-testnode",
-            "cp /deploy/deployed_chain_info.json /deploy/l2_chain_info.json"
         ]),
         store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
-        timeout="15m",
     )
 
-    return out.files_artifacts[0]
+    # Step 6: finalize l2_chain_info.json
+    finalize = plan.run_sh(
+        name="arb-deploy-step6-finalize",
+        description="Finalize l2_chain_info.json from deployed_chain_info.json",
+        image="node:20-bookworm",
+        files={"/deploy": step5.files_artifacts[0]},
+        run=" && ".join([
+            "set -e",
+            "cp /deploy/deployed_chain_info.json /deploy/l2_chain_info.json",
+        ]),
+        store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
+    )
+
+    return finalize.files_artifacts[0]
