@@ -1,10 +1,12 @@
 ethereum_package = import_module("github.com/ethpandaops/ethereum-package/main.star")
 config_mod = import_module("./src/config.star")
 deployer = import_module("./src/deployer.star")
+blockscout = import_module("github.com/LZeroAnalytics/blockscout-package/main.star")
 
 def run(plan, args={}):
     ethereum_args = args.get("ethereum_package", {})
     l2_args = args.get("l2", {})
+    blockscout_args = args.get("blockscout", {})
     logging_args = args.get("logging", {})
 
     l1 = ethereum_package.run(plan, ethereum_args)
@@ -25,7 +27,7 @@ def run(plan, args={}):
         "L1_CHAIN_ID": str(l1_chain_id),
     }
 
-    cfg_artifact = config_mod.write_configs(plan, l1_env, l2_args)
+    cfg_artifact = config_mod.write_configs(plan, l1_env, l2_args, l1_priv_key)
 
     deploy_artifact = deployer.deploy_rollup(
         plan=plan,
@@ -131,8 +133,40 @@ def run(plan, args={}):
 
     return {
         "l1_rpc_url": str(l1_rpc_url),
+    bs_output = {}
+    if bool(blockscout_args.get("enabled", False)):
+        network_name = str(l2_args.get("name", "ArbitrumLocal"))
+        coin = str(blockscout_args.get("coin", "ETH"))
+        ethereum_cfg = {
+            "rpc_url": "http://sequencer:{}".format(seq_rpc),
+            "ws_url": "ws://sequencer:{}".format(seq_ws),
+            "client_name": "geth",
+            "extra_env_vars": {
+                "NETWORK": network_name,
+                "SUBNETWORK": network_name,
+                "COIN": coin,
+            },
+            "frontend_env_vars": {
+                "NEXT_PUBLIC_NETWORK_NAME": network_name,
+            },
+        }
+        general_cfg = {
+            "network_name": network_name,
+            "network_id": str(l2_args.get("chain_id", 42161)),
+            "coin": coin,
+            "is_testnet": "true",
+        }
+        bs_output = blockscout.run(
+            plan,
+            general_args=general_cfg,
+            ethereum_args=ethereum_cfg,
+        )
+
         "l1_chain_id": str(l1_chain_id),
         "l2_rpc_url": "http://sequencer:{}".format(seq_rpc),
         "validation_api_url": "http://validation-node:{}".format(valnode_port),
         "validator_rpc_url": validator_rpc,
+        "blockscout_url": bs_output.get("blockscout_url", ""),
+        "blockscout_frontend_url": bs_output.get("frontend_url", ""),
+        "blockscout_verification_url": bs_output.get("verification_url", ""),
     }
