@@ -88,7 +88,6 @@ def run(plan, args={}):
             entrypoint=["/usr/local/bin/nitro"],
             cmd=[
                 "--conf.file=/config/inbox_reader_config.json",
-                "--node.inbox-reader=true",
             ],
             files={"/config": cfg_artifact, "/deploy": deploy_artifact},
         ),
