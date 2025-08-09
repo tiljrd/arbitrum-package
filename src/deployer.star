@@ -186,6 +186,7 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
             "DISABLE_VERIFICATION": "true",
             "IGNORE_MAX_DATA_SIZE_WARNING": "true",
             "CONTRACTS_OUT_PATH": "/deploy/contracts.json",
+            "WASM_MODULE_ROOT": "0x0000000000000000000000000000000000000000000000000000000000000000",
         }),
         files={
             "/src": src_art,
