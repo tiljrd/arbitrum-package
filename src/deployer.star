@@ -44,9 +44,9 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         },
         run=" && ".join([
             "set -e",
-            "apt-get update && apt-get install -y git jq",
+            "apt-get update && apt-get install -y git jq python3 build-essential",
             "corepack enable",
-            "git clone https://github.com/OffchainLabs/nitro-contracts.git /src",
+            "git clone --depth 1 --branch v3.1.0 https://github.com/OffchainLabs/nitro-contracts.git /src",
             "cd /src",
             "yarn install --frozen-lockfile || yarn install",
             "yarn build || yarn run build || true",
