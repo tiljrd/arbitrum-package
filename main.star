@@ -146,7 +146,9 @@ def run(plan, args={}):
                 "NETWORK": network_name,
                 "SUBNETWORK": network_name,
                 "COIN": coin,
-                "EVISION_DISABLE": "1",
+                "NFT_MEDIA_HANDLER_ENABLED": "false",
+                "NFT_MEDIA_HANDLER_REMOTE_DISPATCHER_NODE_MODE_ENABLED": "false",
+                "NFT_MEDIA_HANDLER_IS_WORKER": "false",
             },
             "frontend_env_vars": {
                 "NEXT_PUBLIC_NETWORK_NAME": network_name,
@@ -157,7 +159,7 @@ def run(plan, args={}):
              "network_id": str(l2_args.get("chain_id", 42161)),
              "coin": coin,
              "is_testnet": "true",
-             "blockscout_image": "ghcr.io/blockscout/blockscout:v6.1.0",
+             "blockscout_image": "ghcr.io/blockscout/blockscout:latest",
              "blockscout_frontend_image": "ghcr.io/blockscout/frontend:v1.38.2",
          }
         bs_output = blockscout.run(
