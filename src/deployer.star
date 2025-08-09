@@ -58,12 +58,12 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
             "/root/.foundry/bin/foundryup",
             "yarn build:forge:yul || true",
             "yarn build || yarn run build || true",
-            # Copy our rendered config into scripts/ so rollupCreation.ts can import it
             "cp /deploy/scripts/config.ts /src/scripts/config.ts",
             "yarn run create-rollup-testnode",
             "cp /deploy/deployed_chain_info.json /deploy/l2_chain_info.json"
         ]),
         store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
+        timeout="15m",
     )
 
     return out.files_artifacts[0]
