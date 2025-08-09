@@ -32,7 +32,12 @@
     "parent-chain-reader": {
       "use-finality-data": false
     },
-    "delayed-sequencer": { "enable": false },
+    "delayed-sequencer": {
+      "enable": true,
+      "use-merge-finality": false,
+      "finalize-distance": 0,
+      "require-full-finality": false
+    },
     "seq-coordinator": {
       "enable": false,
       "redis-url": ""
