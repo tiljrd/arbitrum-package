@@ -122,7 +122,8 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         run=" && ".join([
             "set -e",
             "cd /src",
-            "npx hardhat run --network custom /deploy/deploy_step1.ts",
+            "cp /deploy/deploy_step1.ts /src/deploy_step1.ts",
+            "npx hardhat run --network custom ./deploy_step1.ts",
         ]),
         store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
     )
@@ -146,7 +147,8 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         run=" && ".join([
             "set -e",
             "cd /src",
-            "npx hardhat run --network custom /deploy/deploy_step2.ts",
+            "cp /deploy/deploy_step2.ts /src/deploy_step2.ts",
+            "npx hardhat run --network custom ./deploy_step2.ts",
         ]),
         store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
     )

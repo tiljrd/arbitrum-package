@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
-import { createRollup } from '../scripts/rollupCreation'
+import { createRollup } from './scripts/rollupCreation'
 import { promises as fs } from 'fs'
 
 async function deployWETH(signer: any): Promise<string> {
