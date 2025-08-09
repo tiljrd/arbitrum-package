@@ -105,12 +105,11 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
     )
     src_art = step4.files_artifacts[0]
 
-    # Step 5a: deploy contracts and set templates
-    step5a = plan.run_sh(
-        name="arb-deploy-step5a-deploy-templates",
-        description="Deploy nitro contracts and set templates",
+    # Step 5a: deploy in smaller batches to avoid 180s timeout
+    step5a1 = plan.run_sh(
+        name="arb-deploy-step5a1-core",
+        description="Deploy core bridge and inbox contracts",
         image="node:20-bookworm",
-        timeout="20m",
         env_vars=dict(env, **{
             "CUSTOM_RPC_URL": l1_env["L1_RPC_URL"],
             "DISABLE_VERIFICATION": "true",
@@ -125,8 +124,53 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         run=" && ".join([
             "set -e",
             "cd /src",
-            "cp /deploy/deploy_step1.ts /src/deploy_step1.ts",
-            "npx hardhat run --network custom ./deploy_step1.ts",
+            "cp /deploy/deploy_step1a_core.ts /src/deploy_step1a_core.ts",
+            "npx hardhat run --network custom ./deploy_step1a_core.ts",
+        ]),
+        store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
+    )
+
+    step5a2 = plan.run_sh(
+        name="arb-deploy-step5a2-provers",
+        description="Deploy prover contracts",
+        image="node:20-bookworm",
+        env_vars=dict(env, **{
+            "CUSTOM_RPC_URL": l1_env["L1_RPC_URL"],
+            "DISABLE_VERIFICATION": "true",
+            "IGNORE_MAX_DATA_SIZE_WARNING": "true",
+            "CONTRACTS_OUT_PATH": "/deploy/contracts.json",
+        }),
+        files={
+            "/src": src_art,
+            "/deploy": step5a1.files_artifacts[0],
+        },
+        run=" && ".join([
+            "set -e",
+            "cd /src",
+            "cp /deploy/deploy_step1b_provers.ts /src/deploy_step1b_provers.ts",
+            "npx hardhat run --network custom ./deploy_step1b_provers.ts",
+        ]),
+        store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
+    )
+
+    step5a3 = plan.run_sh(
+        name="arb-deploy-step5a3-rest",
+        env_vars=dict(env, **{
+        env_vars=dict(env, **{
+            "CUSTOM_RPC_URL": l1_env["L1_RPC_URL"],
+            "DISABLE_VERIFICATION": "true",
+            "IGNORE_MAX_DATA_SIZE_WARNING": "true",
+            "CONTRACTS_OUT_PATH": "/deploy/contracts.json",
+        }),
+        files={
+            "/src": src_art,
+            "/deploy": step5a2.files_artifacts[0],
+        },
+        run=" && ".join([
+            "set -e",
+            "cd /src",
+            "cp /deploy/deploy_step1c_rest.ts /src/deploy_step1c_rest.ts",
+            "npx hardhat run --network custom ./deploy_step1c_rest.ts",
         ]),
         store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
     )
@@ -136,7 +180,6 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         name="arb-deploy-step5b-create-rollup",
         description="Create rollup using RollupCreator",
         image="node:20-bookworm",
-        timeout="20m",
         env_vars=dict(env, **{
             "CUSTOM_RPC_URL": l1_env["L1_RPC_URL"],
             "DISABLE_VERIFICATION": "true",
