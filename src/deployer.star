@@ -30,7 +30,7 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         "DEPLOYER_PRIVKEY": str(l1_priv_key),
         "PARENT_CHAIN_RPC": l1_env["L1_RPC_URL"],
         "PARENT_CHAIN_ID": str(l1_network_id),
-        "CHILD_CHAIN_CONFIG_PATH": "/deploy/l2_chain_config.json",
+        "CHILD_CHAIN_CONFIG_PATH": "/config/l2_chain_config.json",
         "CHAIN_DEPLOYMENT_INFO": "/deploy/deployment.json",
         "CHILD_CHAIN_INFO": "/deploy/deployed_chain_info.json",
     }
@@ -183,11 +183,11 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         image="offchainlabs/nitro-node:v3.6.7-a7c9f1e",
         run=" && ".join([
             "set -e",
-            "mkdir -p /deploy",
-            "cat /home/user/target/machines/latest/module-root.txt > /deploy/wasmroot",
-            "echo Read WASM module root: $(cat /deploy/wasmroot)"
+            "mkdir -p /tmp",
+            "cat /home/user/target/machines/latest/module-root.txt > /tmp/wasmroot",
+            "echo Read WASM module root: $(cat /tmp/wasmroot)"
         ]),
-        store=[StoreSpec(src="/deploy", name="arb-wasm-root")],
+        store=[StoreSpec(src="/tmp", name="arb-wasm-root")],
     )
 
     # Step 5b: create rollup using deployed templates
