@@ -155,7 +155,8 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
 
     step5a3 = plan.run_sh(
         name="arb-deploy-step5a3-rest",
-        env_vars=dict(env, **{
+        description="Deploy remaining contracts and set templates",
+        image="node:20-bookworm",
         env_vars=dict(env, **{
             "CUSTOM_RPC_URL": l1_env["L1_RPC_URL"],
             "DISABLE_VERIFICATION": "true",
