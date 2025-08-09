@@ -10,10 +10,13 @@ def write_configs(plan, l1_config, l2_args, l1_priv_key):
     if key.startswith("0x") or key.startswith("0X"):
         key = key[2:]
 
+    owner_addr = str(l2_args.get("owner_address", "0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E"))
+
     data = struct(
         ChainID=chain_id,
         L1RPCURL=l1_rpc_url,
         L1ChainID=l1_chain_id,
+        OwnerAddress=owner_addr,
         SeqRPC=int(sequencer.get("rpc_port", 8547)),
         SeqWS=int(sequencer.get("ws_port", 8548)),
         SeqFeed=int(sequencer.get("feed_port", 9642)),
