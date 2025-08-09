@@ -16,6 +16,14 @@ async function main() {
   const priv = process.env.DEPLOYER_PRIVKEY as string
   if (!priv) throw new Error('DEPLOYER_PRIVKEY not set')
   const signer = new ethers.Wallet(priv, ethers.provider)
+  const signerAddr = await signer.getAddress()
+
+  if (!process.env.OWNER_ADDRESS || process.env.OWNER_ADDRESS.length === 0) {
+    process.env.OWNER_ADDRESS = signerAddr
+  }
+  if (!process.env.SEQUENCER_ADDRESS || process.env.SEQUENCER_ADDRESS.length === 0) {
+    process.env.SEQUENCER_ADDRESS = signerAddr
+  }
 
   const contractsPath = process.env.CONTRACTS_OUT_PATH || '/deploy/contracts.json'
   const contractsJson = JSON.parse(await fs.readFile(contractsPath, 'utf8'))
