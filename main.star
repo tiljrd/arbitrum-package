@@ -1,5 +1,6 @@
 ethereum_package = import_module("github.com/ethpandaops/ethereum-package/main.star")
 config_mod = import_module("./src/config.star")
+deployer = import_module("./src/deployer.star")
 
 def run(plan, args={}):
     ethereum_args = args.get("ethereum_package", {})
@@ -12,6 +13,8 @@ def run(plan, args={}):
     l1_ws_url = all_l1_participants[0].el_context.ws_url
     l1_cl_url = all_l1_participants[0].cl_context.beacon_http_url
     l1_chain_id = l1.network_id
+    # Use index 12 for L2 contract deployments, mirroring optimism-package
+    l1_priv_key = l1.pre_funded_accounts[12].private_key
 
     l1_env = {
         "L1_RPC_KIND": "standard",
@@ -24,6 +27,14 @@ def run(plan, args={}):
 
     cfg_artifact = config_mod.write_configs(plan, l1_env, l2_args)
 
+    deploy_artifact = deployer.deploy_rollup(
+        plan=plan,
+        l1_env=l1_env,
+        l1_network_id=l1_chain_id,
+        l1_priv_key=l1_priv_key,
+        l2_args=l2_args,
+        config_artifact=cfg_artifact,
+    )
 
     valnode_image = l2_args.get("validation_node", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
     valnode_port = int(l2_args.get("validation_node", {}).get("port", 8549))
@@ -33,7 +44,7 @@ def run(plan, args={}):
             image=valnode_image,
             entrypoint=["/usr/local/bin/nitro-val"],
             cmd=["--conf.file=/config/validation_node_config.json"],
-            files={"/config": cfg_artifact},
+            files={"/config": cfg_artifact, "/deploy": deploy_artifact},
             ports={
                 "rpc": PortSpec(number=valnode_port, transport_protocol="TCP"),
             },
@@ -58,7 +69,7 @@ def run(plan, args={}):
                 "--graphql.vhosts=*",
                 "--graphql.corsdomain=*",
             ],
-            files={"/config": cfg_artifact},
+            files={"/config": cfg_artifact, "/deploy": deploy_artifact},
             ports={
                 "rpc": PortSpec(number=seq_rpc, transport_protocol="TCP"),
                 "ws": PortSpec(number=seq_ws, transport_protocol="TCP"),
@@ -77,7 +88,7 @@ def run(plan, args={}):
                 "--conf.file=/config/inbox_reader_config.json",
                 "--node.inbox-reader=true",
             ],
-            files={"/config": cfg_artifact},
+            files={"/config": cfg_artifact, "/deploy": deploy_artifact},
         ),
     )
 
@@ -90,7 +101,7 @@ def run(plan, args={}):
             cmd=[
                 "--conf.file=/config/poster_config.json",
             ],
-            files={"/config": cfg_artifact},
+            files={"/config": cfg_artifact, "/deploy": deploy_artifact},
         ),
     )
 
@@ -109,7 +120,7 @@ def run(plan, args={}):
                     "--conf.file=/config/validator_config.json",
                     "--http.api=net,web3,arb,debug",
                 ],
-                files={"/config": cfg_artifact},
+                files={"/config": cfg_artifact, "/deploy": deploy_artifact},
                 ports={
                     "rpc": PortSpec(number=val_rpc, transport_protocol="TCP"),
                     "ws": PortSpec(number=val_ws, transport_protocol="TCP"),
