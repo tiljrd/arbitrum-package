@@ -1,0 +1,36 @@
+import { ethers } from 'hardhat'
+import '@nomiclabs/hardhat-ethers'
+import { deployAllContracts } from '../scripts/deploymentUtils'
+import { BigNumber, Wallet } from 'ethers'
+import { promises as fs } from 'fs'
+
+async function main() {
+  const priv = process.env.DEPLOYER_PRIVKEY as string
+  if (!priv) throw new Error('DEPLOYER_PRIVKEY not set')
+  const signer = new Wallet(priv, ethers.provider)
+
+  const maxData = process.env.MAX_DATA_SIZE ? BigNumber.from(process.env.MAX_DATA_SIZE) : BigNumber.from('117964')
+  const verify = process.env.DISABLE_VERIFICATION === 'true' ? false : true
+
+  const contracts = await deployAllContracts(signer, maxData, verify)
+
+  await (await contracts.rollupCreator.setTemplates(
+    contracts.bridgeCreator.address,
+    contracts.osp.address,
+    contracts.challengeManager.address,
+    contracts.rollupAdmin.address,
+    contracts.rollupUser.address,
+    contracts.upgradeExecutor.address,
+    contracts.validatorWalletCreator.address,
+    contracts.deployHelper.address
+  )).wait()
+
+  const out = {
+    rollupCreator: contracts.rollupCreator.address,
+    validatorWalletCreator: contracts.validatorWalletCreator.address
+  }
+  const outPath = process.env.CONTRACTS_OUT_PATH || '/deploy/contracts.json'
+  await fs.writeFile(outPath, JSON.stringify(out, null, 2), 'utf8')
+}
+
+main().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1) })

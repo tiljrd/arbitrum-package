@@ -15,10 +15,11 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
                 L1RPCURL=l1_env["L1_RPC_URL"],
                 L1ChainID=l1_env["L1_CHAIN_ID"],
             )),
-            # Provide a minimal scripts/config.ts to satisfy nitro-contracts imports
             "scripts/config.ts": struct(template=read_file("../templates/config.ts.tmpl"), data=struct(
                 ChainID=chain_id,
             )),
+            "deploy_step1.ts": struct(template=read_file("../templates/deploy_step1.ts.tmpl"), data=struct()),
+            "deploy_step2.ts": struct(template=read_file("../templates/deploy_step2.ts.tmpl"), data=struct()),
         },
     )
 
@@ -102,21 +103,50 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
     )
     src_art = step4.files_artifacts[0]
 
-    # Step 5: run create-rollup-testnode
-    step5 = plan.run_sh(
-        name="arb-deploy-step5-create-rollup",
-        description="Run create-rollup-testnode",
+    # Step 5a: deploy contracts and set templates
+    step5a = plan.run_sh(
+        name="arb-deploy-step5a-deploy-templates",
+        description="Deploy nitro contracts and set templates",
         image="node:20-bookworm",
-        env_vars=env,
+        env_vars=dict(env, **{
+            "CUSTOM_RPC_URL": l1_env["L1_RPC_URL"],
+            "DISABLE_VERIFICATION": "true",
+            "IGNORE_MAX_DATA_SIZE_WARNING": "true",
+            "MAX_DATA_SIZE": "117964",
+            "CONTRACTS_OUT_PATH": "/deploy/contracts.json",
+        }),
         files={
             "/src": src_art,
             "/deploy": deploy_files,
+        },
+        run=" && ".join([
+            "set -e",
+            "cd /src",
+            "npx hardhat run --network custom /deploy/deploy_step1.ts",
+        ]),
+        store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
+    )
+
+    # Step 5b: create rollup using deployed templates
+    step5b = plan.run_sh(
+        name="arb-deploy-step5b-create-rollup",
+        description="Create rollup using RollupCreator",
+        image="node:20-bookworm",
+        env_vars=dict(env, **{
+            "CUSTOM_RPC_URL": l1_env["L1_RPC_URL"],
+            "DISABLE_VERIFICATION": "true",
+            "IGNORE_MAX_DATA_SIZE_WARNING": "true",
+            "CONTRACTS_OUT_PATH": "/deploy/contracts.json",
+        }),
+        files={
+            "/src": src_art,
+            "/deploy": step5a.files_artifacts[0],
             "/config": config_artifact,
         },
         run=" && ".join([
             "set -e",
             "cd /src",
-            "yarn run create-rollup-testnode",
+            "npx hardhat run --network custom /deploy/deploy_step2.ts",
         ]),
         store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
     )
@@ -126,7 +156,7 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         name="arb-deploy-step6-finalize",
         description="Finalize l2_chain_info.json from deployed_chain_info.json",
         image="node:20-bookworm",
-        files={"/deploy": step5.files_artifacts[0]},
+        files={"/deploy": step5b.files_artifacts[0]},
         run=" && ".join([
             "set -e",
             "cp /deploy/deployed_chain_info.json /deploy/l2_chain_info.json",
