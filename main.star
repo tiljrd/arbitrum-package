@@ -148,11 +148,13 @@ def run(plan, args={}):
             },
         }
         general_cfg = {
-            "network_name": network_name,
-            "network_id": str(l2_args.get("chain_id", 42161)),
-            "coin": coin,
-            "is_testnet": "true",
-        }
+             "network_name": network_name,
+             "network_id": str(l2_args.get("chain_id", 42161)),
+             "coin": coin,
+             "is_testnet": "true",
+             "blockscout_image": "ghcr.io/blockscout/blockscout:latest",
+             "blockscout_frontend_image": "ghcr.io/blockscout/frontend:latest",
+         }
         bs_output = blockscout.run(
             plan,
             general_args=general_cfg,
