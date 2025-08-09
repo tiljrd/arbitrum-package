@@ -1,0 +1,74 @@
+import { ethers } from 'hardhat'
+import '@nomiclabs/hardhat-ethers'
+import { BigNumber, Wallet } from 'ethers'
+import { deployContract } from './scripts/deploymentUtils'
+import { Toolkit4844 } from './test/contract/toolkit4844'
+import { promises as fs } from 'fs'
+
+async function main() {
+  const priv = process.env.DEPLOYER_PRIVKEY as string
+  if (!priv) throw new Error('DEPLOYER_PRIVKEY not set')
+  const signer = new Wallet(priv, ethers.provider)
+
+  const maxData = process.env.MAX_DATA_SIZE ? BigNumber.from(process.env.MAX_DATA_SIZE) : BigNumber.from('117964')
+  const verify = process.env.DISABLE_VERIFICATION === 'true' ? false : true
+
+  const isOnArb = false
+  const reader4844 = isOnArb ? ethers.constants.AddressZero : (await Toolkit4844.deployReader4844(signer)).address
+
+  const ethBridge = await deployContract('Bridge', signer, [], verify)
+  const ethSequencerInbox = await deployContract('SequencerInbox', signer, [maxData, reader4844, false, false], verify)
+  const ethSequencerInboxDelayBufferable = await deployContract('SequencerInbox', signer, [maxData, reader4844, false, true], verify)
+  const ethInbox = await deployContract('Inbox', signer, [maxData], verify)
+  const ethRollupEventInbox = await deployContract('RollupEventInbox', signer, [], verify)
+  const ethOutbox = await deployContract('Outbox', signer, [], verify)
+
+  const erc20Bridge = await deployContract('ERC20Bridge', signer, [], verify)
+  const erc20SequencerInbox = await deployContract('SequencerInbox', signer, [maxData, reader4844, true, false], verify)
+  const erc20SequencerInboxDelayBufferable = await deployContract('SequencerInbox', signer, [maxData, reader4844, true, true], verify)
+  const erc20Inbox = await deployContract('ERC20Inbox', signer, [maxData], verify)
+  const erc20RollupEventInbox = await deployContract('ERC20RollupEventInbox', signer, [], verify)
+  const erc20Outbox = await deployContract('ERC20Outbox', signer, [], verify)
+
+  const bridgeCreator = await deployContract('BridgeCreator', signer, [
+    [
+      ethBridge.address,
+      ethSequencerInbox.address,
+      ethSequencerInboxDelayBufferable.address,
+      ethInbox.address,
+      ethRollupEventInbox.address,
+      ethOutbox.address,
+    ],
+    [
+      erc20Bridge.address,
+      erc20SequencerInbox.address,
+      erc20SequencerInboxDelayBufferable.address,
+      erc20Inbox.address,
+      erc20RollupEventInbox.address,
+      erc20Outbox.address,
+    ],
+  ], verify)
+
+  const outPath = process.env.CONTRACTS_OUT_PATH || '/deploy/contracts.json'
+  let prev = {}
+  try { prev = JSON.parse(await fs.readFile(outPath, 'utf8')) } catch {}
+  const out = {
+    ...prev,
+    ethBridge: ethBridge.address,
+    ethSequencerInbox: ethSequencerInbox.address,
+    ethSequencerInboxDelayBufferable: ethSequencerInboxDelayBufferable.address,
+    ethInbox: ethInbox.address,
+    ethRollupEventInbox: ethRollupEventInbox.address,
+    ethOutbox: ethOutbox.address,
+    erc20Bridge: erc20Bridge.address,
+    erc20SequencerInbox: erc20SequencerInbox.address,
+    erc20SequencerInboxDelayBufferable: erc20SequencerInboxDelayBufferable.address,
+    erc20Inbox: erc20Inbox.address,
+    erc20RollupEventInbox: erc20RollupEventInbox.address,
+    erc20Outbox: erc20Outbox.address,
+    bridgeCreator: bridgeCreator.address,
+  }
+  await fs.writeFile(outPath, JSON.stringify(out, null, 2), 'utf8')
+}
+
+main().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1) })

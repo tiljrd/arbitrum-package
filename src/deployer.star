@@ -18,7 +18,9 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
             "scripts/config.ts": struct(template=read_file("../templates/config.ts.tmpl"), data=struct(
                 ChainID=chain_id,
             )),
-            "deploy_step1.ts": struct(template=read_file("../templates/deploy_step1.ts.tmpl"), data=struct()),
+            "deploy_step1a_core.ts": struct(template=read_file("../templates/deploy_step1a_core.ts.tmpl"), data=struct()),
+            "deploy_step1b_provers.ts": struct(template=read_file("../templates/deploy_step1b_provers.ts.tmpl"), data=struct()),
+            "deploy_step1c_rest.ts": struct(template=read_file("../templates/deploy_step1c_rest.ts.tmpl"), data=struct()),
             "deploy_step2.ts": struct(template=read_file("../templates/deploy_step2.ts.tmpl"), data=struct()),
         },
     )
@@ -143,7 +145,7 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         }),
         files={
             "/src": src_art,
-            "/deploy": step5a.files_artifacts[0],
+            "/deploy": step5a3.files_artifacts[0],
             "/config": config_artifact,
         },
         run=" && ".join([
