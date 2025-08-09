@@ -176,6 +176,20 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
     )
 
+    # Step 5a4: fetch WASM module root from nitro-node image
+    wasmroot_step = plan.run_sh(
+        name="arb-deploy-step5a4-wasmroot",
+        description="Read WASM module root from nitro-node image",
+        image="offchainlabs/nitro-node:v3.6.7-a7c9f1e",
+        run=" && ".join([
+            "set -e",
+            "mkdir -p /deploy",
+            "cat /home/user/target/machines/latest/module-root.txt > /deploy/wasmroot",
+            "echo Read WASM module root: $(cat /deploy/wasmroot)"
+        ]),
+        store=[StoreSpec(src="/deploy", name="arb-wasm-root")],
+    )
+
     # Step 5b: create rollup using deployed templates
     step5b = plan.run_sh(
         name="arb-deploy-step5b-create-rollup",
@@ -186,17 +200,20 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
             "DISABLE_VERIFICATION": "true",
             "IGNORE_MAX_DATA_SIZE_WARNING": "true",
             "CONTRACTS_OUT_PATH": "/deploy/contracts.json",
-            "WASM_MODULE_ROOT": "0x0000000000000000000000000000000000000000000000000000000000000000",
         }),
         files={
             "/src": src_art,
             "/deploy": step5a3.files_artifacts[0],
+            "/wasm": wasmroot_step.files_artifacts[0],
             "/config": config_artifact,
         },
         run=" && ".join([
             "set -e",
             "cd /src",
             "cp /deploy/deploy_step2.ts /src/deploy_step2.ts",
+            "cp /wasm/wasmroot /deploy/wasmroot",
+            "export WASM_MODULE_ROOT=$(cat /deploy/wasmroot)",
+            "echo Using WASM_MODULE_ROOT=$WASM_MODULE_ROOT",
             "npx hardhat run --network custom ./deploy_step2.ts",
         ]),
         store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
