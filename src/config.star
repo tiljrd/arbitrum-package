@@ -11,6 +11,8 @@ def write_configs(plan, l1_config, l2_args, l1_priv_key):
         key = key[2:]
 
     owner_addr = str(l2_args.get("owner_address", "0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E"))
+    if not (owner_addr.startswith("0x") or owner_addr.startswith("0X")):
+        owner_addr = "0x" + owner_addr
 
     data = struct(
         ChainID=chain_id,
