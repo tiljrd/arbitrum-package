@@ -18,11 +18,6 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         },
     )
 
-    nitro_contracts = plan.upload_files(
-        src="/home/ubuntu/repos/nitro/contracts",
-        name="nitro-contracts-src",
-    )
-
     env = {
         "CHILD_CHAIN_NAME": child_chain_name,
         "DEPLOYER_PRIVKEY": str(l1_priv_key),
@@ -44,18 +39,19 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         image="node:20-bullseye",
         env_vars=env,
         files={
-            "/src": nitro_contracts,
             "/deploy": deploy_files,
             "/config": config_artifact,
         },
         run=" && ".join([
             "set -e",
-            "cd /src",
+            "apt-get update && apt-get install -y git jq",
             "corepack enable",
+            "git clone https://github.com/OffchainLabs/nitro-contracts.git /src",
+            "cd /src",
             "yarn install --frozen-lockfile || yarn install",
             "yarn build || yarn run build || true",
             "yarn run create-rollup-testnode",
-            "jq '[.[]]' /deploy/deployed_chain_info.json > /deploy/l2_chain_info.json"
+            "cp /deploy/deployed_chain_info.json /deploy/l2_chain_info.json"
         ]),
         store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
     )
