@@ -7,7 +7,8 @@
     }
   },
   "chain": {
-    "id": {{ .ChainID }}
+    "id": {{ .ChainID }},
+    "info-files": ["/deploy/l2_chain_info.json"]
   },
   "node": {
     "bold": {
@@ -21,7 +22,10 @@
       "enable": true,
       "staker-interval": "10s",
       "make-assertion-interval": "10s",
-      "strategy": "MakeNodes"
+      "strategy": "MakeNodes",
+      "parent-chain-wallet": {
+        "private-key": "{{ .L1PrivKey }}"
+      }
     },
     "sequencer": false,
     "dangerous": {

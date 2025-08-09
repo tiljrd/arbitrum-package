@@ -7,7 +7,8 @@
     }
   },
   "chain": {
-    "id": {{ .ChainID }}
+    "id": {{ .ChainID }},
+    "info-files": ["/deploy/l2_chain_info.json"]
   },
   "node": {
     "bold": {
@@ -25,8 +26,11 @@
     },
     "sequencer": false,
     "dangerous": {
-      "no-sequencer-coordinator": false,
+      "no-sequencer-coordinator": true,
       "disable-blob-reader": true
+    },
+    "parent-chain-reader": {
+      "use-finality-data": false
     },
     "delayed-sequencer": { "enable": false },
     "seq-coordinator": { "enable": false, "redis-url": "" },
@@ -40,7 +44,7 @@
         "jwtsecret": "{{ .ValJwtSecret }}"
       }
     },
-    "inbox-reader": { "enable": true },
+    "inbox-reader": true,
     "data-availability": {
       "enable": false
     }

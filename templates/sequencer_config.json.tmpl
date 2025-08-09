@@ -7,7 +7,8 @@
     }
   },
   "chain": {
-    "id": {{ .ChainID }}
+    "id": {{ .ChainID }},
+    "info-files": ["/deploy/l2_chain_info.json"]
   },
   "node": {
     "bold": {
@@ -25,12 +26,20 @@
     },
     "sequencer": true,
     "dangerous": {
-      "no-sequencer-coordinator": false,
+      "no-sequencer-coordinator": true,
       "disable-blob-reader": true
     },
-    "delayed-sequencer": { "enable": true },
-    "seq-coordinator": {
+    "parent-chain-reader": {
+      "use-finality-data": false
+    },
+    "delayed-sequencer": {
       "enable": true,
+      "use-merge-finality": false,
+      "finalize-distance": 0,
+      "require-full-finality": false
+    },
+    "seq-coordinator": {
+      "enable": false,
       "redis-url": ""
     },
     "batch-poster": {

@@ -1,4 +1,4 @@
-def write_configs(plan, l1_config, l2_args):
+def write_configs(plan, l1_config, l2_args, l1_priv_key):
     chain_id = str(l2_args.get("chain_id", 42161))
     l1_rpc_url = str(l1_config.get("L1_RPC_URL"))
     l1_chain_id = str(l1_config.get("L1_CHAIN_ID"))
@@ -6,10 +6,19 @@ def write_configs(plan, l1_config, l2_args):
     validator = l2_args.get("validator", {})
     validation_node = l2_args.get("validation_node", {})
 
+    key = str(l1_priv_key)
+    if key.startswith("0x") or key.startswith("0X"):
+        key = key[2:]
+
+    owner_addr = str(l2_args.get("owner_address", "0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E"))
+    if not (owner_addr.startswith("0x") or owner_addr.startswith("0X")):
+        owner_addr = "0x" + owner_addr
+
     data = struct(
         ChainID=chain_id,
         L1RPCURL=l1_rpc_url,
         L1ChainID=l1_chain_id,
+        OwnerAddress=owner_addr,
         SeqRPC=int(sequencer.get("rpc_port", 8547)),
         SeqWS=int(sequencer.get("ws_port", 8548)),
         SeqFeed=int(sequencer.get("feed_port", 9642)),
@@ -17,6 +26,7 @@ def write_configs(plan, l1_config, l2_args):
         ValWS=int(validator.get("ws_port", 8248)),
         ValNodePort=int(validation_node.get("port", 8549)),
         ValJwtSecret="/config/val_jwt.hex",
+        L1PrivKey=key,
     )
 
     artifact = plan.render_templates(

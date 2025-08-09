@@ -1,0 +1,65 @@
+import { ethers } from 'hardhat'
+import '@nomiclabs/hardhat-ethers'
+import { createRollup } from './scripts/rollupCreation'
+import { promises as fs } from 'fs'
+
+async function deployWETH(signer: any): Promise<string> {
+  const factory = await ethers.getContractFactory('TestWETH9')
+  const connected = factory.connect(signer)
+  const weth = await connected.deploy('Wrapped Ether', 'WETH')
+  await weth.deployTransaction.wait()
+  await weth.deployed()
+  return weth.address
+}
+
+async function main() {
+  const priv = process.env.DEPLOYER_PRIVKEY as string
+  if (!priv) throw new Error('DEPLOYER_PRIVKEY not set')
+  const signer = new ethers.Wallet(priv, ethers.provider)
+  const signerAddr = await signer.getAddress()
+
+  if (!process.env.OWNER_ADDRESS || process.env.OWNER_ADDRESS.length === 0) {
+    process.env.OWNER_ADDRESS = signerAddr
+  }
+  if (!process.env.SEQUENCER_ADDRESS || process.env.SEQUENCER_ADDRESS.length === 0) {
+    process.env.SEQUENCER_ADDRESS = signerAddr
+  }
+
+  const contractsPath = process.env.CONTRACTS_OUT_PATH || '/deploy/contracts.json'
+  const contractsJson = JSON.parse(await fs.readFile(contractsPath, 'utf8'))
+  const rollupCreatorAddress = contractsJson.rollupCreator as string
+  if (!rollupCreatorAddress) throw new Error('rollupCreator missing from contracts.json')
+
+  let stakeToken = process.env.STAKE_TOKEN_ADDRESS as string
+  if (!stakeToken) {
+    stakeToken = await deployWETH(signer)
+  }
+
+  const result = await createRollup(
+    signer,
+    true,
+    rollupCreatorAddress,
+    ethers.constants.AddressZero,
+    ethers.constants.AddressZero,
+    stakeToken
+  )
+  if (!result) {
+    throw new Error('Rollup creation failed')
+  }
+
+  const { rollupCreationResult, chainInfo } = result
+
+  const chainDeploymentInfo =
+    process.env.CHAIN_DEPLOYMENT_INFO !== undefined
+      ? process.env.CHAIN_DEPLOYMENT_INFO
+      : '/deploy/deployment.json'
+  await fs.writeFile(chainDeploymentInfo, JSON.stringify(rollupCreationResult, null, 2), 'utf8')
+
+  const childChainName = process.env.CHILD_CHAIN_NAME || 'ArbitrumLocal'
+  chainInfo['chain-name'] = childChainName
+  const childChainInfo =
+    process.env.CHILD_CHAIN_INFO !== undefined ? process.env.CHILD_CHAIN_INFO : '/deploy/deployed_chain_info.json'
+  await fs.writeFile(childChainInfo, JSON.stringify([chainInfo], null, 2), 'utf8')
+}
+
+main().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1) })

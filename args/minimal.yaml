@@ -2,6 +2,7 @@
 ethereum_package: {}
 
 l2:
+  name: "ArbitrumLocal"
   chain_id: 42161
   sequencer:
     image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
@@ -19,7 +20,11 @@ l2:
   validation_node:
     image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
     port: 8549
-  use_validator: true
+  use_validator: false
+
+blockscout:
+  enabled: true
+  coin: "ETH"
 
 logging:
   level: "info"

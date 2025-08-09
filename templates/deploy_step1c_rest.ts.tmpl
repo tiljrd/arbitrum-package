@@ -1,0 +1,50 @@
+import { ethers } from 'hardhat'
+import '@nomiclabs/hardhat-ethers'
+import { Wallet } from 'ethers'
+import { deployContract, deployUpgradeExecutor } from './scripts/deploymentUtils'
+import { promises as fs } from 'fs'
+
+async function main() {
+  const priv = process.env.DEPLOYER_PRIVKEY as string
+  if (!priv) throw new Error('DEPLOYER_PRIVKEY not set')
+  const signer = new Wallet(priv, ethers.provider)
+  const verify = process.env.DISABLE_VERIFICATION === 'true' ? false : true
+
+  const challengeManager = await deployContract('EdgeChallengeManager', signer, [], verify)
+  const rollupAdmin = await deployContract('RollupAdminLogic', signer, [], verify)
+  const rollupUser = await deployContract('RollupUserLogic', signer, [], verify)
+  const upgradeExecutor = await deployUpgradeExecutor(signer)
+  await upgradeExecutor.deployTransaction.wait()
+  const validatorWalletCreator = await deployContract('ValidatorWalletCreator', signer, [], verify)
+  const rollupCreator = await deployContract('RollupCreator', signer, [], verify)
+  const deployHelper = await deployContract('DeployHelper', signer, [], verify)
+
+  // Load addresses for setTemplates
+  const outPath = process.env.CONTRACTS_OUT_PATH || '/deploy/contracts.json'
+  const prev = JSON.parse(await fs.readFile(outPath, 'utf8'))
+
+  await (await rollupCreator.setTemplates(
+    prev.bridgeCreator,
+    prev.osp,
+    challengeManager.address,
+    rollupAdmin.address,
+    rollupUser.address,
+    upgradeExecutor.address,
+    validatorWalletCreator.address,
+    deployHelper.address
+  )).wait()
+
+  const out = {
+    ...prev,
+    challengeManager: challengeManager.address,
+    rollupAdmin: rollupAdmin.address,
+    rollupUser: rollupUser.address,
+    upgradeExecutor: upgradeExecutor.address,
+    validatorWalletCreator: validatorWalletCreator.address,
+    rollupCreator: rollupCreator.address,
+    deployHelper: deployHelper.address,
+  }
+  await fs.writeFile(outPath, JSON.stringify(out, null, 2), 'utf8')
+}
+
+main().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1) })

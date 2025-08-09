@@ -1,0 +1,35 @@
+import { ethers } from 'hardhat'
+import '@nomiclabs/hardhat-ethers'
+import { Wallet } from 'ethers'
+import { deployContract } from './scripts/deploymentUtils'
+import { promises as fs } from 'fs'
+
+async function main() {
+  const priv = process.env.DEPLOYER_PRIVKEY as string
+  if (!priv) throw new Error('DEPLOYER_PRIVKEY not set')
+  const signer = new Wallet(priv, ethers.provider)
+  const verify = process.env.DISABLE_VERIFICATION === 'true' ? false : true
+
+  const prover0 = await deployContract('OneStepProver0', signer, [], verify)
+  const proverMem = await deployContract('OneStepProverMemory', signer, [], verify)
+  const proverMath = await deployContract('OneStepProverMath', signer, [], verify)
+  const proverHostIo = await deployContract('OneStepProverHostIo', signer, [], verify)
+  const osp = await deployContract('OneStepProofEntry', signer, [
+    prover0.address, proverMem.address, proverMath.address, proverHostIo.address
+  ], verify)
+
+  const outPath = process.env.CONTRACTS_OUT_PATH || '/deploy/contracts.json'
+  let prev = {}
+  try { prev = JSON.parse(await fs.readFile(outPath, 'utf8')) } catch {}
+  const out = {
+    ...prev,
+    prover0: prover0.address,
+    proverMem: proverMem.address,
+    proverMath: proverMath.address,
+    proverHostIo: proverHostIo.address,
+    osp: osp.address,
+  }
+  await fs.writeFile(outPath, JSON.stringify(out, null, 2), 'utf8')
+}
+
+main().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1) })
