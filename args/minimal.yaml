@@ -23,7 +23,7 @@ l2:
   use_validator: true
 
 blockscout:
-  enabled: false
+  enabled: true
   coin: "ETH"
 
 logging:
