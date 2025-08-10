@@ -66,15 +66,25 @@ def run(plan, args={}):
     target = "internal"
     if mode == "preloaded":
         precomputed = deployment_args.get("preload", {}).get("precomputed_artifacts", {})
-        if bool(precomputed.get("contracts_json", "")) or bool(precomputed.get("deployed_chain_info_json", "")) or bool(precomputed.get("l2_chain_info_json", "")):
+        if (
+            bool(precomputed.get("contracts_json", "")) or
+            bool(precomputed.get("deployed_chain_info_json", "")) or
+            bool(precomputed.get("l2_chain_info_json", "")) or
+            bool(precomputed.get("l2_chain_info_genesis_json", ""))
+        ):
             deploy_mode = "skip"
     if mode.startswith("external"):
         target = "external"
         if mode == "external_existing":
             ext_cfg = deployment_args.get("external_l1", {})
             precomputed = ext_cfg.get("precomputed_artifacts", {})
-            if not (bool(precomputed.get("contracts_json", "")) or bool(precomputed.get("deployed_chain_info_json", "")) or bool(precomputed.get("l2_chain_info_json", ""))):
-                fail("external_existing mode requires external_l1.precomputed_artifacts to include at least one of: contracts_json, deployed_chain_info_json, l2_chain_info_json")
+            if not (
+                bool(precomputed.get("contracts_json", "")) or
+                bool(precomputed.get("deployed_chain_info_json", "")) or
+                bool(precomputed.get("l2_chain_info_json", "")) or
+                bool(precomputed.get("l2_chain_info_genesis_json", ""))
+            ):
+                fail("external_existing mode requires external_l1.precomputed_artifacts to include at least one of: contracts_json, deployed_chain_info_json, l2_chain_info_json, l2_chain_info_genesis_json")
             deploy_mode = "skip"
             contract_addresses = ext_cfg.get("contract_addresses", {})
 

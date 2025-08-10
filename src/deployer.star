@@ -13,14 +13,17 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         cj = str(precomputed_artifacts.get("contracts_json", ""))
         dj = str(precomputed_artifacts.get("deployed_chain_info_json", ""))
         lj = str(precomputed_artifacts.get("l2_chain_info_json", ""))
+        gj = str(precomputed_artifacts.get("l2_chain_info_genesis_json", ""))
         if cj != "":
             files_cfg["contracts.json"] = struct(template=cj, data=struct())
         if dj != "":
             files_cfg["deployed_chain_info.json"] = struct(template=dj, data=struct())
         if lj != "":
             files_cfg["l2_chain_info.json"] = struct(template=lj, data=struct())
+        if gj != "":
+            files_cfg["l2_chain_info.genesis.json"] = struct(template=gj, data=struct())
         if len(files_cfg.keys()) == 0:
-            fail("deploy_mode=skip requires precomputed_artifacts to include at least one of: contracts_json, deployed_chain_info_json, l2_chain_info_json")
+            fail("deploy_mode=skip requires precomputed_artifacts to include at least one of: contracts_json, deployed_chain_info_json, l2_chain_info_json, l2_chain_info_genesis_json")
         artifact = plan.render_templates(
             name="arb-deploy-out",
             description="Arbitrum rollup precomputed artifacts",

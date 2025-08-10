@@ -149,6 +149,7 @@ deployment:
             }
           }
         ]
+      l2_chain_info_genesis_json: ""
     contract_addresses: {}
 ethereum_package: {}
 l2:

@@ -8,11 +8,13 @@ deployment:
         "storage": {}
       }
     }'
-    precomputed_artifacts: {}
+    precomputed_artifacts:
+      l2_chain_info_genesis_json: ""
 ethereum_package: {}
 l2:
   name: "ArbitrumLocalPreloaded"
   chain_id: 42161
+  info_file_path: "/deploy/l2_chain_info.genesis.json"
   sequencer:
     image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
     rpc_port: 8547

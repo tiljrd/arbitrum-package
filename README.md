@@ -136,6 +136,35 @@ To generate a preload blob:
    - Use debug_dumpBlock or tracing to discover storage keys, then read them via eth_getStorageAt
 4. Assemble a JSON matching ethereum-package’s additional_preloaded_contracts and place it in deployment.preload.additional_preloaded_contracts (as a single-quoted JSON string).
 
+## Genesis-based Preloaded Boot (no L1 logs)
+When using preloaded mode, you can bypass L1 init log ingestion by booting Nitro from a genesis info-file.
+
+Steps:
+1) After a successful full run (mode 2), collect:
+   - /deploy/deployed_chain_info.json
+   - /deploy/l2_chain_config.json (or use the template defaults)
+2) Generate a genesis info-file with has-genesis-state: true:
+   - Makefile:
+     - make gen-genesis-info DEPLOYED=/path/deployed_chain_info.json L2CONFIG=/path/l2_chain_config.json OUT=/path/l2_chain_info.genesis.json
+   - Or directly:
+     - node tools/gen-genesis-info.mjs --deployed /path/deployed_chain_info.json --l2config /path/l2_chain_config.json --out /path/l2_chain_info.genesis.json
+3) Generate the preloaded contracts blob (accounts state) if you haven’t already:
+   - Makefile:
+     - make gen-preloaded RPC=http://172.17.0.1:<port> CONTRACTS=/path/contracts.json BLOCK=latest OUT=/path/preloaded.json ENCODING=eth
+   - Or directly:
+     - node tools/gen-preloaded.mjs --rpc http://172.17.0.1:<port> --contracts /path/contracts.json --block latest --out /path/preloaded.json --encoding eth
+4) Update your preloaded args:
+   - deployment.preload.additional_preloaded_contracts: embed contents of preloaded.json
+   - deployment.preload.precomputed_artifacts: include the three artifacts from the full run (contracts.json, deployed_chain_info.json, l2_chain_info.json)
+   - l2.info_file_path: "/deploy/l2_chain_info.genesis.json"
+     - The package will mount your genesis info-file at /deploy/l2_chain_info.genesis.json and direct Nitro to it
+5) Run:
+   - kurtosis run --enclave arbitrum-preloaded . --args-file args/preloaded.generated.sample.yaml
+
+Notes:
+- This path does not emit L1 deployment transactions or require reading L1 init logs; Nitro reads the genesis info-file instead.
+- Ensure the genesis info-file rollup addresses and chain-config match the preloaded state you embed.
+
 ## Notes
 - Modes 3 and 4 do not run the ethereum-package; they are L2-only against an external L1.
 - When pointing containers to a host-running L1 RPC:
