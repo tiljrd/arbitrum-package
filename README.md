@@ -1,22 +1,65 @@
 # Arbitrum Kurtosis Package
 
-This package launches a simple Arbitrum One–equivalent local network:
-- L1 via ethereum-package
-- Core Nitro L2 services: sequencer, inbox-reader, batch-poster, validator, validation-node
-- No AnyTrust/DAS and no Timeboost in this iteration
-- Structured so the sequencer can be swapped to a custom arb-reth later
+This package launches an Arbitrum One–equivalent local network with four deployment modes:
+1) Deploy L1 and L2 with preloaded contracts for fast development
+2) Deploy L1 and L2 from scratch (full deployment)
+3) Deploy only L2 against an existing L1 that already has the contracts
+4) Deploy only L2 against an existing L1 that doesn’t have the contracts yet (deploy contracts to external L1)
+
+Core services: sequencer, inbox-reader, batch-poster, validator (optional), validation-node.
+No AnyTrust/DAS and no Timeboost in this iteration.
 
 ## Prerequisites
 - Kurtosis CLI installed
 
 ## Run
+Always clean old enclaves first to avoid conflicts:
 ```
 kurtosis clean -a
-kurtosis run --enclave arbitrum . --args-file args/minimal.yaml
+```
+
+Examples:
+- Mode 1 (preloaded, internal L1):
+```
+kurtosis run --enclave arbitrum-preloaded . --args-file args/preloaded.yaml
+```
+- Mode 2 (full, internal L1):
+```
+kurtosis run --enclave arbitrum-full . --args-file args/full.yaml
+```
+- Mode 3 (L2-only on external L1 with existing contracts; does not run ethereum-package):
+```
+kurtosis run --enclave arbitrum-l2-existing . --args-file args/external_existing.yaml
+```
+- Mode 4 (L2-only on external L1 and deploy contracts; does not run ethereum-package):
+```
+kurtosis run --enclave arbitrum-l2-deploy . --args-file args/external_deploy.yaml
 ```
 
 ## Args
-See args/minimal.yaml. It uses ethereum-package defaults for L1 and configures Nitro service images and ports.
+See:
+- args/preloaded.yaml
+- args/full.yaml
+- args/external_existing.yaml
+- args/external_deploy.yaml
+
+Top-level structure:
+- deployment.mode: preloaded | full | external_existing | external_deploy
+- For preloaded: deployment.preload.additional_preloaded_contracts is passed to the ethereum-package as network_params.additional_preloaded_contracts
+- For external modes: deployment.external_l1.rpc_url and chain_id are required. In external_deploy also set private_key. In external_existing provide precomputed artifacts or contract addresses.
+
+Mode 1 uses ethereum-package’s additional_preloaded_contracts to preload code/balances/storage at mainnet addresses. The expected format is a JSON string:
+```
+'{
+  "0x123463a4B065722E99115D6c222f267d9cABb524": {
+    "balance": "1ETH",
+    "code": "0x1234",
+    "storage": {},
+    "nonce": 0,
+    "secretKey": "0x"
+  }
+}'
+```
 
 ## Endpoints
 - L1 RPC: printed as l1_rpc_url
@@ -26,12 +69,22 @@ See args/minimal.yaml. It uses ethereum-package defaults for L1 and configures N
 
 ## Logs
 ```
-kurtosis service logs arbitrum sequencer
-kurtosis service logs arbitrum validator
-kurtosis service logs arbitrum validation-node
+kurtosis service logs <enclave> sequencer
+kurtosis service logs <enclave> validator
+kurtosis service logs <enclave> validation-node
 ```
 
+## Generating preloaded contracts
+To generate a preload blob:
+1. Run a full deployment once (mode 2).
+2. Enumerate the deployed contract addresses from /deploy/contracts.json and /deploy/deployed_chain_info.json.
+3. For each address:
+   - Query eth_getCode to get code
+   - Query eth_getBalance and eth_getTransactionCount for balance/nonce
+   - Use debug_dumpBlock or tracing to discover storage keys, then read them via eth_getStorageAt
+4. Assemble a JSON matching ethereum-package’s additional_preloaded_contracts and place it in deployment.preload.additional_preloaded_contracts (as a single-quoted JSON string).
+
 ## Notes
+- Modes 3 and 4 do not run the ethereum-package; they are L2-only against an external L1.
 - AnyTrust/DAS and Timeboost are excluded.
-- Blockscout can be added later.
-- To try a different sequencer image in the future, set l2.sequencer.image in the args file.
+- To try a different sequencer image, set l2.sequencer.image in the args file.
