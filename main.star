@@ -122,7 +122,8 @@ def run(plan, args={}):
     seq_feed = int(l2_args.get("sequencer", {}).get("feed_port", 9642))
     init_flags = []
     if mode == "preloaded":
-        init_flags = ["--init.empty"]
+        info_file_path = str(l2_args.get("info_file_path", "/deploy/l2_chain_info.json"))
+        init_flags = ["--init.genesis-json-file={}".format(info_file_path)]
 
     sequencer = plan.add_service(
         name="sequencer",
