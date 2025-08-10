@@ -1,7 +1,7 @@
 deployment:
   mode: external_existing
   external_l1:
-    rpc_url: "http://172.17.0.1:32788"
+    rpc_url: "http://172.17.0.1:40003"
     ws_url: ""
     cl_url: ""
     chain_id: 3151908
