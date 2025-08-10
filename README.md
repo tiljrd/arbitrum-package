@@ -86,5 +86,8 @@ To generate a preload blob:
 
 ## Notes
 - Modes 3 and 4 do not run the ethereum-package; they are L2-only against an external L1.
+- When pointing containers to a host-running L1 RPC:
+  - On Linux, use the Docker host gateway IP (often http://172.17.0.1:<mapped-port>) instead of 127.0.0.1, which resolves inside the container.
+  - host.docker.internal is not always available on Linux; prefer the 172.17.0.1 form.
 - AnyTrust/DAS and Timeboost are excluded.
 - To try a different sequencer image, set l2.sequencer.image in the args file.
