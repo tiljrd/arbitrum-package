@@ -68,14 +68,29 @@ async function tryDumpBlock(rpcUrl, blockTag) {
   }
 }
 
+async function getBlockHash(rpcUrl, blockTag) {
+  // blockTag is hex number like 0x2b or 'latest'
+  const block = await rpc(rpcUrl, 'eth_getBlockByNumber', [blockTag, false]);
+  if (!block || !block.hash) throw new Error(`eth_getBlockByNumber returned no hash for ${blockTag}`);
+  return block.hash;
+}
+
 async function dumpStorageRangeAt(rpcUrl, addr, blockTag) {
   const storage = {};
   let nextKey = null;
   let pages = 0;
+  let blockHash;
+  try {
+    blockHash = await getBlockHash(rpcUrl, blockTag);
+  } catch (e) {
+    // If we cannot get the block hash, fall back to empty storage
+    return { storage, complete: false, methodAvailable: false };
+  }
   while (true) {
     let res;
     try {
-      res = await rpc(rpcUrl, 'debug_storageRangeAt', [addr, blockTag, nextKey ?? '0x', 0, 1024]);
+      // Geth signature: debug_storageRangeAt(blockHash, txIndex, address, startKey, maxResults)
+      res = await rpc(rpcUrl, 'debug_storageRangeAt', [blockHash, 0, addr, nextKey ?? '0x', 1024]);
     } catch (e) {
       if (String(e).includes('Method not found')) {
         return { storage, complete: false, methodAvailable: false };
