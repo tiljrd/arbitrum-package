@@ -6,6 +6,10 @@ deployment:
     cl_url: ""
     chain_id: 1
     private_key: ""
+    precomputed_artifacts:
+      contracts_json: ""
+      deployed_chain_info_json: ""
+      l2_chain_info_json: ""
     contract_addresses: {}
 ethereum_package: {}
 l2:

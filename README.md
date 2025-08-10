@@ -46,7 +46,7 @@ See:
 Top-level structure:
 - deployment.mode: preloaded | full | external_existing | external_deploy
 - For preloaded: deployment.preload.additional_preloaded_contracts is passed to the ethereum-package as network_params.additional_preloaded_contracts
-- For external modes: deployment.external_l1.rpc_url and chain_id are required. In external_deploy also set private_key. In external_existing provide precomputed artifacts or contract addresses.
+- For external modes: deployment.external_l1.rpc_url and chain_id are required. In external_deploy also set private_key. In external_existing you must provide precomputed artifacts under external_l1.precomputed_artifacts (at least one of: contracts_json, deployed_chain_info_json, l2_chain_info_json).
 
 Mode 1 uses ethereum-package’s additional_preloaded_contracts to preload code/balances/storage at mainnet addresses. The expected format is a JSON string:
 ```

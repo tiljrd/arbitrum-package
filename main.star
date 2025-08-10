@@ -71,8 +71,12 @@ def run(plan, args={}):
     if mode.startswith("external"):
         target = "external"
         if mode == "external_existing":
+            ext_cfg = deployment_args.get("external_l1", {})
+            precomputed = ext_cfg.get("precomputed_artifacts", {})
+            if not (bool(precomputed.get("contracts_json", "")) or bool(precomputed.get("deployed_chain_info_json", "")) or bool(precomputed.get("l2_chain_info_json", ""))):
+                fail("external_existing mode requires external_l1.precomputed_artifacts to include at least one of: contracts_json, deployed_chain_info_json, l2_chain_info_json")
             deploy_mode = "skip"
-            contract_addresses = deployment_args.get("external_l1", {}).get("contract_addresses", {})
+            contract_addresses = ext_cfg.get("contract_addresses", {})
 
     deploy_artifact = deployer.deploy_rollup(
         plan=plan,
