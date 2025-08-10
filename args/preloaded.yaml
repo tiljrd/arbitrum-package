@@ -1,0 +1,37 @@
+deployment:
+  mode: preloaded
+  preload:
+    additional_preloaded_contracts: '{
+      "0x0000000000000000000000000000000000000064": {
+        "balance": "0ETH",
+        "code": "0x",
+        "storage": {}
+      }
+    }'
+    precomputed_artifacts: {}
+ethereum_package: {}
+l2:
+  name: "ArbitrumLocalPreloaded"
+  chain_id: 42161
+  sequencer:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8547
+    ws_port: 8548
+    feed_port: 9642
+  validator:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8247
+    ws_port: 8248
+  batch_poster:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  inbox_reader:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  validation_node:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    port: 8549
+  use_validator: false
+blockscout:
+  enabled: true
+  coin: "ETH"
+logging:
+  level: "info"
