@@ -123,6 +123,22 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
     )
     src_art = step4.files_artifacts[0]
 
+    wait_l1 = plan.run_sh(
+        name="arb-deploy-wait-l1",
+        description="Wait for external L1 RPC to be ready",
+        image="node:20-bookworm",
+        env_vars=dict(env, **{
+            "CUSTOM_RPC_URL": l1_env["L1_RPC_URL"],
+        }),
+        run=" && ".join([
+            "set -e",
+            "apt-get update && apt-get install -y curl",
+            "echo Waiting for L1 RPC at $CUSTOM_RPC_URL with chainId $PARENT_CHAIN_ID",
+            "for i in $(seq 1 60); do RES=$(curl -s -X POST -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"method\":\"net_version\",\"params\":[],\"id\":1}' $CUSTOM_RPC_URL || true); echo $RES | grep -q '\"result\"' && break || true; sleep 2; done",
+            "sleep 5"
+        ]),
+    )
+
     step5a1 = plan.run_sh(
         name="arb-deploy-step5a1-core",
         description="Deploy core bridge and inbox contracts",
