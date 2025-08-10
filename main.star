@@ -4,30 +4,75 @@ deployer = import_module("./src/deployer.star")
 blockscout = import_module("github.com/LZeroAnalytics/blockscout-package/main.star")
 
 def run(plan, args={}):
+    deployment_args = args.get("deployment", {})
+    mode = str(deployment_args.get("mode", "full"))
     ethereum_args = args.get("ethereum_package", {})
     l2_args = args.get("l2", {})
     blockscout_args = args.get("blockscout", {})
     logging_args = args.get("logging", {})
 
-    l1 = ethereum_package.run(plan, ethereum_args)
-    all_l1_participants = l1.all_participants
-    l1_rpc_url = all_l1_participants[0].el_context.rpc_http_url
-    l1_ws_url = all_l1_participants[0].el_context.ws_url
-    l1_cl_url = all_l1_participants[0].cl_context.beacon_http_url
-    l1_chain_id = l1.network_id
-    # Use index 12 for L2 contract deployments, mirroring optimism-package
-    l1_priv_key = l1.pre_funded_accounts[12].private_key
+    l1_env = {}
+    l1_chain_id = ""
+    l1_priv_key = ""
 
-    l1_env = {
-        "L1_RPC_KIND": "standard",
-        "WEB3_RPC_URL": str(l1_rpc_url),
-        "L1_RPC_URL": str(l1_rpc_url),
-        "CL_RPC_URL": str(l1_cl_url),
-        "L1_WS_URL": str(l1_ws_url),
-        "L1_CHAIN_ID": str(l1_chain_id),
-    }
+    if mode in ["full", "preloaded"]:
+        if mode == "preloaded":
+            preload = deployment_args.get("preload", {})
+            preload_map = str(preload.get("additional_preloaded_contracts", "{}"))
+            net_params = dict(ethereum_args.get("network_params", {}))
+            net_params["additional_preloaded_contracts"] = preload_map
+            ethereum_args["network_params"] = net_params
+        l1 = ethereum_package.run(plan, ethereum_args)
+        all_l1_participants = l1.all_participants
+        l1_rpc_url = all_l1_participants[0].el_context.rpc_http_url
+        l1_ws_url = all_l1_participants[0].el_context.ws_url
+        l1_cl_url = all_l1_participants[0].cl_context.beacon_http_url
+        l1_chain_id = l1.network_id
+        l1_priv_key = l1.pre_funded_accounts[12].private_key
+        l1_env = {
+            "L1_RPC_KIND": "standard",
+            "WEB3_RPC_URL": str(l1_rpc_url),
+            "L1_RPC_URL": str(l1_rpc_url),
+            "CL_RPC_URL": str(l1_cl_url),
+            "L1_WS_URL": str(l1_ws_url),
+            "L1_CHAIN_ID": str(l1_chain_id),
+        }
+    elif mode in ["external_existing", "external_deploy"]:
+        ext = deployment_args.get("external_l1", {})
+        rpc_url = str(ext.get("rpc_url", ""))
+        chain_id = str(ext.get("chain_id", ""))
+        if rpc_url == "" or chain_id == "":
+            fail("external_l1.rpc_url and external_l1.chain_id are required for external modes")
+        l1_env = {
+            "L1_RPC_KIND": "standard",
+            "WEB3_RPC_URL": rpc_url,
+            "L1_RPC_URL": rpc_url,
+            "CL_RPC_URL": str(ext.get("cl_url", "")),
+            "L1_WS_URL": str(ext.get("ws_url", "")),
+            "L1_CHAIN_ID": chain_id,
+        }
+        l1_chain_id = chain_id
+        l1_priv_key = str(ext.get("private_key", ""))
+        if mode == "external_deploy" and l1_priv_key == "":
+            fail("external_deploy mode requires external_l1.private_key")
+    else:
+        fail("Invalid deployment.mode: {}".format(mode))
 
     cfg_artifact = config_mod.write_configs(plan, l1_env, l2_args, l1_priv_key)
+
+    deploy_mode = "deploy"
+    precomputed = {}
+    contract_addresses = {}
+    target = "internal"
+    if mode == "preloaded":
+        precomputed = deployment_args.get("preload", {}).get("precomputed_artifacts", {})
+        if bool(precomputed.get("contracts_json", "")) or bool(precomputed.get("deployed_chain_info_json", "")) or bool(precomputed.get("l2_chain_info_json", "")):
+            deploy_mode = "skip"
+    if mode.startswith("external"):
+        target = "external"
+        if mode == "external_existing":
+            deploy_mode = "skip"
+            contract_addresses = deployment_args.get("external_l1", {}).get("contract_addresses", {})
 
     deploy_artifact = deployer.deploy_rollup(
         plan=plan,
@@ -36,6 +81,10 @@ def run(plan, args={}):
         l1_priv_key=l1_priv_key,
         l2_args=l2_args,
         config_artifact=cfg_artifact,
+        deploy_mode=deploy_mode,
+        target=target,
+        precomputed_artifacts=precomputed,
+        contract_addresses=contract_addresses,
     )
 
     valnode_image = l2_args.get("validation_node", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
@@ -169,7 +218,7 @@ def run(plan, args={}):
         )
 
     return {
-        "l1_rpc_url": str(l1_rpc_url),
+        "l1_rpc_url": str(l1_env.get("L1_RPC_URL", "")),
         "l1_chain_id": str(l1_chain_id),
         "l2_rpc_url": "http://sequencer:{}".format(seq_rpc),
         "validation_api_url": "http://validation-node:{}".format(valnode_port),
