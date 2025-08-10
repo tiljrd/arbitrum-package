@@ -120,6 +120,10 @@ def run(plan, args={}):
     seq_rpc = int(l2_args.get("sequencer", {}).get("rpc_port", 8547))
     seq_ws = int(l2_args.get("sequencer", {}).get("ws_port", 8548))
     seq_feed = int(l2_args.get("sequencer", {}).get("feed_port", 9642))
+    init_flags = []
+    if mode == "preloaded":
+        init_flags = ["--init.empty"]
+
     sequencer = plan.add_service(
         name="sequencer",
         config=ServiceConfig(
@@ -134,7 +138,7 @@ def run(plan, args={}):
                 "--graphql.enable",
                 "--graphql.vhosts=*",
                 "--graphql.corsdomain=*",
-            ],
+            ] + init_flags,
             files={"/config": cfg_artifact, "/deploy": deploy_artifact},
             ports={
                 "rpc": PortSpec(number=seq_rpc, transport_protocol="TCP"),
@@ -153,7 +157,7 @@ def run(plan, args={}):
             cmd=[
                 "--conf.file=/config/inbox_reader_config.json",
                 "--node.parent-chain-reader.use-finality-data=false",
-            ],
+            ] + init_flags,
             files={"/config": cfg_artifact, "/deploy": deploy_artifact},
         ),
     )
@@ -168,7 +172,7 @@ def run(plan, args={}):
                 "--conf.file=/config/poster_config.json",
                 "--node.parent-chain-reader.use-finality-data=false",
                 "--node.batch-poster.l1-block-bound=latest",
-            ],
+            ] + init_flags,
             files={"/config": cfg_artifact, "/deploy": deploy_artifact},
         ),
     )
@@ -187,7 +191,7 @@ def run(plan, args={}):
                 cmd=[
                     "--conf.file=/config/validator_config.json",
                     "--http.api=net,web3,arb,debug",
-                ],
+                ] + init_flags,
                 files={"/config": cfg_artifact, "/deploy": deploy_artifact},
                 ports={
                     "rpc": PortSpec(number=val_rpc, transport_protocol="TCP"),
