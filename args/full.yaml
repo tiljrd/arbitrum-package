@@ -22,7 +22,7 @@ l2:
     port: 8549
   use_validator: false
 blockscout:
-  enabled: true
+  enabled: false
   coin: "ETH"
 logging:
   level: "info"
