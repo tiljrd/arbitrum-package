@@ -1,10 +1,32 @@
 utils = import_module("github.com/LZeroAnalytics/optimism-package/src/util.star")
 
-def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_artifact):
+def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_artifact,
+                  deploy_mode="deploy", target="internal",
+                  precomputed_artifacts={}, contract_addresses={}):
     chain_id = str(l2_args.get("chain_id", 42161))
     child_chain_name = str(l2_args.get("name", "arb-dev"))
     seq_addr = l2_args.get("sequencer_address", "")
     owner_addr = l2_args.get("owner_address", "")
+
+    if deploy_mode == "skip":
+        files_cfg = {}
+        cj = str(precomputed_artifacts.get("contracts_json", ""))
+        dj = str(precomputed_artifacts.get("deployed_chain_info_json", ""))
+        lj = str(precomputed_artifacts.get("l2_chain_info_json", ""))
+        if cj != "":
+            files_cfg["contracts.json"] = struct(template=cj, data=struct())
+        if dj != "":
+            files_cfg["deployed_chain_info.json"] = struct(template=dj, data=struct())
+        if lj != "":
+            files_cfg["l2_chain_info.json"] = struct(template=lj, data=struct())
+        if len(files_cfg.keys()) == 0:
+            fail("deploy_mode=skip requires precomputed_artifacts to include at least one of: contracts_json, deployed_chain_info_json, l2_chain_info_json")
+        artifact = plan.render_templates(
+            name="arb-deploy-out",
+            description="Arbitrum rollup precomputed artifacts",
+            config=files_cfg,
+        )
+        return artifact
 
     deploy_files = plan.render_templates(
         name="arb-deploy-out",
@@ -40,7 +62,6 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
     if owner_addr:
         env["OWNER_ADDRESS"] = str(owner_addr)
 
-    # Step 1: base tools + clone repo
     step1 = plan.run_sh(
         name="arb-deploy-step1-clone",
         description="Install base tools and clone nitro-contracts",
@@ -57,7 +78,6 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
     )
     src_art = step1.files_artifacts[0]
 
-    # Step 2: yarn install
     step2 = plan.run_sh(
         name="arb-deploy-step2-yarn-install",
         description="Install JS dependencies",
@@ -72,7 +92,6 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
     )
     src_art = step2.files_artifacts[0]
 
-    # Step 3: install foundry and build yul
     step3 = plan.run_sh(
         name="arb-deploy-step3-foundry",
         description="Install Foundry and build YUL artifacts",
@@ -90,7 +109,6 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
     )
     src_art = step3.files_artifacts[0]
 
-    # Step 4: build contracts
     step4 = plan.run_sh(
         name="arb-deploy-step4-build",
         description="Build nitro-contracts",
@@ -105,7 +123,6 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
     )
     src_art = step4.files_artifacts[0]
 
-    # Step 5a: deploy in smaller batches to avoid 180s timeout
     step5a1 = plan.run_sh(
         name="arb-deploy-step5a1-core",
         description="Deploy core bridge and inbox contracts",
@@ -176,7 +193,6 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
     )
 
-    # Step 5a4: fetch WASM module root from nitro-node image
     wasmroot_step = plan.run_sh(
         name="arb-deploy-step5a4-wasmroot",
         description="Read WASM module root from nitro-node image",
@@ -190,7 +206,6 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         store=[StoreSpec(src="/tmp", name="arb-wasm-root")],
     )
 
-    # Step 5b: create rollup using deployed templates
     step5b = plan.run_sh(
         name="arb-deploy-step5b-create-rollup",
         description="Create rollup using RollupCreator",
@@ -219,7 +234,6 @@ def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_arti
         store=[StoreSpec(src="/deploy", name="arb-deploy-out")],
     )
 
-    # Step 6: finalize l2_chain_info.json
     finalize = plan.run_sh(
         name="arb-deploy-step6-finalize",
         description="Finalize l2_chain_info.json from deployed_chain_info.json",
