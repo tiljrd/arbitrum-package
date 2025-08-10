@@ -26,6 +26,13 @@ function readJSON(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
 
+function isHexAddress(v) {
+  if (typeof v !== 'string') return false;
+  if (!v.startsWith('0x')) return false;
+  const hex = v.slice(2);
+  return /^[0-9a-fA-F]{40}$/.test(hex);
+}
+
 function buildFromDeployed(deployed, l2config, name) {
   const first = Array.isArray(deployed) ? deployed[0] : deployed;
   const chainName = name || first?.['chain-name'] || 'ArbitrumLocalPreloaded';
@@ -33,6 +40,12 @@ function buildFromDeployed(deployed, l2config, name) {
   const parentIsArb = false;
 
   const chainConfig = l2config || first?.['chain-config'] || {};
+  if (!chainConfig.arbitrum) chainConfig.arbitrum = {};
+  const ico = chainConfig.arbitrum.InitialChainOwner;
+  if (!isHexAddress(ico)) {
+    chainConfig.arbitrum.InitialChainOwner = '0x0000000000000000000000000000000000000000';
+  }
+
   const rollup = first?.rollup || {};
 
   return [
