@@ -1,0 +1,177 @@
+deployment:
+  mode: external_existing
+  external_l1:
+    rpc_url: "http://172.17.0.1:41003"
+    ws_url: ""
+    cl_url: ""
+    chain_id: 3151908
+    private_key: ""
+    precomputed_artifacts:
+      contracts_json: |
+        {
+          "ethBridge": "0x17435ccE3d1B4fA2e5f8A08eD921D57C6762A180",
+          "ethSequencerInbox": "0x703848F4c85f18e3acd8196c8eC91eb0b7Bd0797",
+          "ethSequencerInboxDelayBufferable": "0x422A3492e218383753D8006C7Bfa97815B44373F",
+          "ethInbox": "0x0643D39D47CF0ea95Dbea69Bf11a7F8C4Bc34968",
+          "ethRollupEventInbox": "0x9f9F5Fd89ad648f2C000C954d8d9C87743243eC5",
+          "ethOutbox": "0x8F0342A7060e76dfc7F6e9dEbfAD9b9eC919952c",
+          "erc20Bridge": "0x72ae2643518179cF01bcA3278a37ceAD408DE8b2",
+          "erc20SequencerInbox": "0x00c042C4D5D913277CE16611a2ce6e9003554aD5",
+          "erc20SequencerInboxDelayBufferable": "0x9fCF7D13d10dEdF17d0f24C62f0cf4ED462f65b7",
+          "erc20Inbox": "0x63e6DDE6763C3466C7b45Be880f7eE5dC2ca3E25",
+          "erc20RollupEventInbox": "0x9f5eaC3d8e082f47631F1551F1343F23cd427162",
+          "erc20Outbox": "0x373E0B8B80A15cdf587C1263654c6B5edd195a43",
+          "bridgeCreator": "0x72bCbB3f339aF622c28a26488Eed9097a2977404",
+          "prover0": "0xEE0fCB8E5cCAD0b4197BAabd633333886f5C364d",
+          "proverMem": "0x1ADB9959EB142bE128E6dfEcc8D571f07cd66DeE",
+          "proverMath": "0x086f77C5686dfe3F2f8FE487C5f8d357952C8556",
+          "proverHostIo": "0xB965D10739e19a9158e7f713720B0145D996E370",
+          "osp": "0x3A8C1bd531b5C1aeFBB9ebc3e021C1251cF4Ccb1",
+          "challengeManager": "0x38435Ac0E0e9Bd8737c476F8F39a24b0735e00dc",
+          "rollupAdmin": "0x1430c9c2143F97aaE765197e744BaBa7e78acaf0",
+          "rollupUser": "0x80741a37E3644612F0465145C9709a90B6D77Ee3",
+          "upgradeExecutor": "0xE19dddcaF5dCb2Ec0Fe52229e3133B99396f22e2",
+          "validatorWalletCreator": "0x2A3365C575a5Fc8fD2842B82D29f8035E7f71CeC",
+          "rollupCreator": "0x9ECB6f04D47FA2599449AaA523bF84476f7aD80f",
+          "deployHelper": "0x4Af231e5E624038Cd40FC4fd5b86B39d13E1429e"
+        }
+      deployed_chain_info_json: |
+        [
+          {
+            "chain-name": "ArbitrumExternalDeploy",
+            "parent-chain-id": 3151908,
+            "parent-chain-is-arbitrum": false,
+            "sequencer-url": "",
+            "secondary-forwarding-target": "",
+            "feed-url": "",
+            "secondary-feed-url": "",
+            "das-index-url": "",
+            "has-genesis-state": false,
+            "chain-config": {
+              "chainId": 42161,
+              "homesteadBlock": 0,
+              "daoForkSupport": true,
+              "eip150Block": 0,
+              "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "eip155Block": 0,
+              "eip158Block": 0,
+              "byzantiumBlock": 0,
+              "constantinopleBlock": 0,
+              "petersburgBlock": 0,
+              "istanbulBlock": 0,
+              "muirGlacierBlock": 0,
+              "berlinBlock": 0,
+              "londonBlock": 0,
+              "clique": {
+                "period": 0,
+                "epoch": 0
+              },
+              "arbitrum": {
+                "EnableArbOS": true,
+                "AllowDebugPrecompiles": true,
+                "DataAvailabilityCommittee": false,
+                "InitialArbOSVersion": 40,
+                "InitialChainOwner": "0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E",
+                "GenesisBlockNum": 0
+              },
+              "l1": {
+                "rpc_url": "http://172.17.0.1:41003",
+                "chain_id": 3151908
+              }
+            },
+            "rollup": {
+              "bridge": "0x6803932fF837e8D1b8fAbF910536d87B47b0F2D9",
+              "inbox": "0x1152F1d7cC4036c6599A7c907283517502010EC7",
+              "sequencer-inbox": "0x636C491cA58cFe8e5CBf30eC6EF926A50B88e7FE",
+              "deployed-at": 57,
+              "rollup": "0x3361cEF84B04e31bf0a58e55b3EE0eEbDaD2C792",
+              "native-token": "0x0000000000000000000000000000000000000000",
+              "upgrade-executor": "0x039128608D4d72a09fBD613cdC1B590e3C6A3EF0",
+              "validator-wallet-creator": "0x2A3365C575a5Fc8fD2842B82D29f8035E7f71CeC",
+              "stake-token": "0xB0275c9A863072599ea283A143414370470a369a"
+            }
+          }
+        ]
+      l2_chain_info_json: |
+        [
+          {
+            "chain-name": "ArbitrumExternalDeploy",
+            "parent-chain-id": 3151908,
+            "parent-chain-is-arbitrum": false,
+            "sequencer-url": "",
+            "secondary-forwarding-target": "",
+            "feed-url": "",
+            "secondary-feed-url": "",
+            "das-index-url": "",
+            "has-genesis-state": false,
+            "chain-config": {
+              "chainId": 42161,
+              "homesteadBlock": 0,
+              "daoForkSupport": true,
+              "eip150Block": 0,
+              "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "eip155Block": 0,
+              "eip158Block": 0,
+              "byzantiumBlock": 0,
+              "constantinopleBlock": 0,
+              "petersburgBlock": 0,
+              "istanbulBlock": 0,
+              "muirGlacierBlock": 0,
+              "berlinBlock": 0,
+              "londonBlock": 0,
+              "clique": {
+                "period": 0,
+                "epoch": 0
+              },
+              "arbitrum": {
+                "EnableArbOS": true,
+                "AllowDebugPrecompiles": true,
+                "DataAvailabilityCommittee": false,
+                "InitialArbOSVersion": 40,
+                "InitialChainOwner": "0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E",
+                "GenesisBlockNum": 0
+              },
+              "l1": {
+                "rpc_url": "http://172.17.0.1:41003",
+                "chain_id": 3151908
+              }
+            },
+            "rollup": {
+              "bridge": "0x6803932fF837e8D1b8fAbF910536d87B47b0F2D9",
+              "inbox": "0x1152F1d7cC4036c6599A7c907283517502010EC7",
+              "sequencer-inbox": "0x636C491cA58cFe8e5CBf30eC6EF926A50B88e7FE",
+              "deployed-at": 57,
+              "rollup": "0x3361cEF84B04e31bf0a58e55b3EE0eEbDaD2C792",
+              "native-token": "0x0000000000000000000000000000000000000000",
+              "upgrade-executor": "0x039128608D4d72a09fBD613cdC1B590e3C6A3EF0",
+              "validator-wallet-creator": "0x2A3365C575a5Fc8fD2842B82D29f8035E7f71CeC",
+              "stake-token": "0xB0275c9A863072599ea283A143414370470a369a"
+            }
+          }
+        ]
+    contract_addresses: {}
+ethereum_package: {}
+l2:
+  name: "ArbitrumExternalExistingFromPrev"
+  chain_id: 42161
+  sequencer:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8547
+    ws_port: 8548
+    feed_port: 9642
+  validator:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8247
+    ws_port: 8248
+  batch_poster:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  inbox_reader:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  validation_node:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    port: 8549
+  use_validator: false
+blockscout:
+  enabled: false
+logging:
+  level: "info"

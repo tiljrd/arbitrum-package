@@ -1,0 +1,39 @@
+deployment:
+  mode: external_existing
+  external_l1:
+    rpc_url: "http://localhost:8545"
+    ws_url: ""
+    cl_url: ""
+    chain_id: 1
+    private_key: ""
+    precomputed_artifacts:
+      contracts_json: ""
+      deployed_chain_info_json: ""
+      l2_chain_info_json: ""
+    contract_addresses: {}
+ethereum_package: {}
+l2:
+  name: "ArbitrumExternalExisting"
+  chain_id: 42161
+  sequencer:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8547
+    ws_port: 8548
+    feed_port: 9642
+  validator:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8247
+    ws_port: 8248
+  batch_poster:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  inbox_reader:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  validation_node:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    port: 8549
+  use_validator: false
+blockscout:
+  enabled: true
+  coin: "ETH"
+logging:
+  level: "info"
