@@ -1,0 +1,33 @@
+deployment:
+  mode: preloaded
+  preload:
+    additional_preloaded_contracts: 'REPLACE_ME_PRELOADED'
+    precomputed_artifacts:
+      l2_chain_info_genesis_json: 'REPLACE_ME_GENESIS'
+ethereum_package: {}
+l2:
+  name: "ArbitrumLocalPreloaded"
+  chain_id: 42161
+  info_file_path: "/deploy/l2_chain_info.genesis.json"
+  sequencer:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8547
+    ws_port: 8548
+    feed_port: 9642
+  validator:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8247
+    ws_port: 8248
+  batch_poster:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  inbox_reader:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  validation_node:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    port: 8549
+  use_validator: false
+blockscout:
+  enabled: false
+  coin: "ETH"
+logging:
+  level: "info"
