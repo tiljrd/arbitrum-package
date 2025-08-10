@@ -10,7 +10,7 @@ function usage(msg) {
 
 function parseArgs() {
   const args = {};
-  for (let i = 2; i &lt; process.argv.length; i++) {
+  for (let i = 2; i < process.argv.length; i++) {
     const k = process.argv[i];
     if (!k.startsWith('--')) usage(`Unexpected arg: ${k}`);
     const next = process.argv[i + 1];
@@ -41,7 +41,7 @@ async function rpc(rpcUrl, method, params) {
 
 function toHexBlockTag(block) {
   if (block === 'latest' || block === 'earliest' || block === 'pending' || block === 'safe' || block === 'finalized') return block;
-  if (typeof block === 'string' &amp;&amp; block.startsWith('0x')) return block;
+  if (typeof block === 'string' && block.startsWith('0x')) return block;
   const n = BigInt(block);
   return '0x' + n.toString(16);
 }
@@ -61,11 +61,37 @@ async function tryDumpBlock(rpcUrl, blockTag) {
     return result;
   } catch (e) {
     if (String(e).includes('Method not found')) {
-      console.warn('WARN: debug_dumpBlock not available; will fall back to individual RPCs without storage.');
+      console.warn('WARN: debug_dumpBlock not available; will fall back to individual RPCs and storageRangeAt if available.');
       return null;
     }
     throw e;
   }
+}
+
+async function dumpStorageRangeAt(rpcUrl, addr, blockTag) {
+  const storage = {};
+  let nextKey = null;
+  let pages = 0;
+  while (true) {
+    let res;
+    try {
+      res = await rpc(rpcUrl, 'debug_storageRangeAt', [addr, blockTag, nextKey ?? '0x', 0, 1024]);
+    } catch (e) {
+      if (String(e).includes('Method not found')) {
+        return { storage, complete: false, methodAvailable: false };
+      }
+      throw e;
+    }
+    const page = res?.storage || {};
+    for (const [slot, entry] of Object.entries(page)) {
+      const val = entry?.value || '0x0';
+      if (val !== '0x0' && val !== '0x' && val !== '0x00') storage[slot.toLowerCase()] = val;
+    }
+    pages++;
+    if (!res?.nextKey || pages > 10000) break;
+    nextKey = res.nextKey;
+  }
+  return { storage, complete: true, methodAvailable: true };
 }
 
 async function main() {
@@ -76,11 +102,11 @@ async function main() {
   const blockTag = toHexBlockTag(args.block);
 
   const addrs = new Set();
-  Object.values(contracts).forEach(a =&gt; addrs.add(String(a).toLowerCase()));
+  Object.values(contracts).forEach(a => addrs.add(String(a).toLowerCase()));
   if (Array.isArray(extra)) {
-    extra.forEach(a =&gt; addrs.add(String(a).toLowerCase()));
-  } else if (extra &amp;&amp; typeof extra === 'object') {
-    Object.values(extra).forEach(a =&gt; addrs.add(String(a).toLowerCase()));
+    extra.forEach(a => addrs.add(String(a).toLowerCase()));
+  } else if (extra && typeof extra === 'object') {
+    Object.values(extra).forEach(a => addrs.add(String(a).toLowerCase()));
   }
 
   let dump = null;
@@ -92,7 +118,7 @@ async function main() {
   }
 
   let accounts = {};
-  if (dump &amp;&amp; dump.accounts) {
+  if (dump && dump.accounts) {
     accounts = dump.accounts;
   } else if (dump) {
     accounts = dump;
@@ -106,17 +132,16 @@ async function main() {
     let nonceHex = '0x0';
     let storageObj = {};
 
-    const accDump = accounts[addr] || accounts[addr.toLowerCase()] || accounts[addr.toUpperCase()];
+    const accDump = accounts[addr] || accounts[addr?.toLowerCase?.()] || accounts[addr?.toUpperCase?.()];
     if (accDump) {
       if (accDump.code) code = accDump.code;
       if (accDump.balance) balanceHex = accDump.balance;
       if (typeof accDump.nonce !== 'undefined') {
         nonceHex = typeof accDump.nonce === 'string' ? accDump.nonce : '0x' + BigInt(accDump.nonce).toString(16);
       }
-      if (accDump.storage &amp;&amp; typeof accDump.storage === 'object') {
-        storageObj = {};
+      if (accDump.storage && typeof accDump.storage === 'object') {
         for (const [slot, val] of Object.entries(accDump.storage)) {
-          if (val &amp;&amp; val !== '0x' &amp;&amp; val !== '0x0' &amp;&amp; val !== '0x00') {
+          if (val && val !== '0x' && val !== '0x0' && val !== '0x00') {
             storageObj[slot.toLowerCase()] = val;
           }
         }
@@ -133,6 +158,11 @@ async function main() {
       nonceHex = await rpc(rpcUrl, 'eth_getTransactionCount', [addr, blockTag]);
     }
 
+    if (Object.keys(storageObj).length === 0) {
+      const { storage } = await dumpStorageRangeAt(rpcUrl, addr, blockTag);
+      storageObj = storage;
+    }
+
     const entry = {
       balance: args.encoding === 'wei' ? balanceHex : toEthStringFromHexWei(balanceHex),
       code,
@@ -147,7 +177,7 @@ async function main() {
   console.log(`Wrote ${args.out}`);
 }
 
-main().catch(e =&gt; {
+main().catch(e => {
   console.error(e);
   process.exit(1);
 });
