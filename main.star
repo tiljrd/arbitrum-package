@@ -58,6 +58,8 @@ def run(plan, args={}):
     else:
         fail("Invalid deployment.mode: {}".format(mode))
 
+    if mode == "preloaded":
+        l2_args["no_l1_listener"] = True
     cfg_artifact = config_mod.write_configs(plan, l1_env, l2_args, l1_priv_key)
 
     deploy_mode = "deploy"
@@ -148,34 +150,35 @@ def run(plan, args={}):
         ),
     )
 
-    inbox_image = l2_args.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
-    inbox_reader = plan.add_service(
-        name="inbox-reader",
-        config=ServiceConfig(
-            image=inbox_image,
-            entrypoint=["/usr/local/bin/nitro"],
-            cmd=[
-                "--conf.file=/config/inbox_reader_config.json",
-                "--node.parent-chain-reader.use-finality-data=false",
-            ] + init_flags,
-            files={"/config": cfg_artifact, "/deploy": deploy_artifact},
-        ),
-    )
+    if mode != "preloaded":
+        inbox_image = l2_args.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
+        inbox_reader = plan.add_service(
+            name="inbox-reader",
+            config=ServiceConfig(
+                image=inbox_image,
+                entrypoint=["/usr/local/bin/nitro"],
+                cmd=[
+                    "--conf.file=/config/inbox_reader_config.json",
+                    "--node.parent-chain-reader.use-finality-data=false",
+                ] + init_flags,
+                files={"/config": cfg_artifact, "/deploy": deploy_artifact},
+            ),
+        )
 
-    poster_image = l2_args.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
-    batch_poster = plan.add_service(
-        name="batch-poster",
-        config=ServiceConfig(
-            image=poster_image,
-            entrypoint=["/usr/local/bin/nitro"],
-            cmd=[
-                "--conf.file=/config/poster_config.json",
-                "--node.parent-chain-reader.use-finality-data=false",
-                "--node.batch-poster.l1-block-bound=latest",
-            ] + init_flags,
-            files={"/config": cfg_artifact, "/deploy": deploy_artifact},
-        ),
-    )
+        poster_image = l2_args.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
+        batch_poster = plan.add_service(
+            name="batch-poster",
+            config=ServiceConfig(
+                image=poster_image,
+                entrypoint=["/usr/local/bin/nitro"],
+                cmd=[
+                    "--conf.file=/config/poster_config.json",
+                    "--node.parent-chain-reader.use-finality-data=false",
+                    "--node.batch-poster.l1-block-bound=latest",
+                ] + init_flags,
+                files={"/config": cfg_artifact, "/deploy": deploy_artifact},
+            ),
+        )
 
     use_validator = bool(l2_args.get("use_validator", True))
     validator_rpc = ""

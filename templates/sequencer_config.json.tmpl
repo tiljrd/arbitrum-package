@@ -27,7 +27,8 @@
     "sequencer": true,
     "dangerous": {
       "no-sequencer-coordinator": true,
-      "disable-blob-reader": true
+      "disable-blob-reader": true,
+      "no-l1-listener": {{ .NoL1Listener }}
     },
     "parent-chain-reader": {
       "use-finality-data": false
