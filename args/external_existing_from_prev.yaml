@@ -1,7 +1,7 @@
 deployment:
   mode: external_existing
   external_l1:
-    rpc_url: "http://172.17.0.1:40003"
+    rpc_url: "http://172.17.0.1:41003"
     ws_url: ""
     cl_url: ""
     chain_id: 3151908
@@ -9,36 +9,36 @@ deployment:
     precomputed_artifacts:
       contracts_json: |
         {
-          "ethBridge": "0x120671CcDfEbC50Cfe7B7A62bd0593AA6E3F3cF0",
-          "ethSequencerInbox": "0x1212eE52Bc401cCA1BF752D7E13F78a4eb3EbBB3",
-          "ethSequencerInboxDelayBufferable": "0x91BF7398aFc3d2691aA23799fdb9175EE2EB6105",
-          "ethInbox": "0x8Ed7F8Eca5535258AD520E32Ff6B8330A187641C",
-          "ethRollupEventInbox": "0xB74Bb6AE1A1804D283D17e95620dA9b9b0E6E0DA",
-          "ethOutbox": "0xDEF6De2F8F07BC476BA838476150a1dACD3599Bc",
-          "erc20Bridge": "0x65F19aeA752c5624A84EEc1abefb2fFbF18Ab0cc",
-          "erc20SequencerInbox": "0xFBaf9dC705b8d6cbB8e0Be6D1166e362e372d71e",
-          "erc20SequencerInboxDelayBufferable": "0xa51C441cD6515ad6113a3C23Fc5dea357fD4281D",
-          "erc20Inbox": "0x380A5d89E743F6236A429B31E29dCe1ECaf00D28",
-          "erc20RollupEventInbox": "0x68d57F329d6FE654ABA46F9c26668dEAcE383a7D",
-          "erc20Outbox": "0x7E6FFBDC3Dd2A310D134d75cf7913121Dd84c52B",
-          "bridgeCreator": "0x0d8a5301Ef950408aE1654449766A982B554dbb1",
-          "prover0": "0x7fC26B95dED0f51D4Efd4Bd7ee44260a941faaab",
-          "proverMem": "0xc69c1e66f9EaD5836D96bD1128569eb2a0058579",
-          "proverMath": "0x36c038b0081A2C345BF3b9e2A2331a781457b0a5",
-          "proverHostIo": "0xC9de3Bb0E3F74d9A2e594d52dc7a83F6b7733463",
-          "osp": "0xA8CF7E31740f127cEdF36EEEDDA228565C0C781F",
-          "challengeManager": "0x0828Ad9C51E6c10038daeC6A63Fe110AB2E9F3f8",
-          "rollupAdmin": "0xED3B4bf7e17E47DAC37D7bB913196E192DCaf748",
-          "rollupUser": "0xCf99c17529CC22C39551547E323ED9Dda6841734",
-          "upgradeExecutor": "0xbA337Ce3e690Fdd01b1A830404E8caaAe22a0638",
-          "validatorWalletCreator": "0x329cF899464ba580Bf047F4B886dB342c602f579",
-          "rollupCreator": "0xEd2Be21C3A66c11FefB10C6b07271C450Bd09Ae5",
-          "deployHelper": "0xF2749e312B43529cb35A91e355919A376Bd22ce3"
+          "ethBridge": "0x17435ccE3d1B4fA2e5f8A08eD921D57C6762A180",
+          "ethSequencerInbox": "0x703848F4c85f18e3acd8196c8eC91eb0b7Bd0797",
+          "ethSequencerInboxDelayBufferable": "0x422A3492e218383753D8006C7Bfa97815B44373F",
+          "ethInbox": "0x0643D39D47CF0ea95Dbea69Bf11a7F8C4Bc34968",
+          "ethRollupEventInbox": "0x9f9F5Fd89ad648f2C000C954d8d9C87743243eC5",
+          "ethOutbox": "0x8F0342A7060e76dfc7F6e9dEbfAD9b9eC919952c",
+          "erc20Bridge": "0x72ae2643518179cF01bcA3278a37ceAD408DE8b2",
+          "erc20SequencerInbox": "0x00c042C4D5D913277CE16611a2ce6e9003554aD5",
+          "erc20SequencerInboxDelayBufferable": "0x9fCF7D13d10dEdF17d0f24C62f0cf4ED462f65b7",
+          "erc20Inbox": "0x63e6DDE6763C3466C7b45Be880f7eE5dC2ca3E25",
+          "erc20RollupEventInbox": "0x9f5eaC3d8e082f47631F1551F1343F23cd427162",
+          "erc20Outbox": "0x373E0B8B80A15cdf587C1263654c6B5edd195a43",
+          "bridgeCreator": "0x72bCbB3f339aF622c28a26488Eed9097a2977404",
+          "prover0": "0xEE0fCB8E5cCAD0b4197BAabd633333886f5C364d",
+          "proverMem": "0x1ADB9959EB142bE128E6dfEcc8D571f07cd66DeE",
+          "proverMath": "0x086f77C5686dfe3F2f8FE487C5f8d357952C8556",
+          "proverHostIo": "0xB965D10739e19a9158e7f713720B0145D996E370",
+          "osp": "0x3A8C1bd531b5C1aeFBB9ebc3e021C1251cF4Ccb1",
+          "challengeManager": "0x38435Ac0E0e9Bd8737c476F8F39a24b0735e00dc",
+          "rollupAdmin": "0x1430c9c2143F97aaE765197e744BaBa7e78acaf0",
+          "rollupUser": "0x80741a37E3644612F0465145C9709a90B6D77Ee3",
+          "upgradeExecutor": "0xE19dddcaF5dCb2Ec0Fe52229e3133B99396f22e2",
+          "validatorWalletCreator": "0x2A3365C575a5Fc8fD2842B82D29f8035E7f71CeC",
+          "rollupCreator": "0x9ECB6f04D47FA2599449AaA523bF84476f7aD80f",
+          "deployHelper": "0x4Af231e5E624038Cd40FC4fd5b86B39d13E1429e"
         }
       deployed_chain_info_json: |
         [
           {
-            "chain-name": "ArbitrumLocalPreloaded",
+            "chain-name": "ArbitrumExternalDeploy",
             "parent-chain-id": 3151908,
             "parent-chain-is-arbitrum": false,
             "sequencer-url": "",
@@ -75,27 +75,27 @@ deployment:
                 "GenesisBlockNum": 0
               },
               "l1": {
-                "rpc_url": "http://172.16.4.11:8545",
+                "rpc_url": "http://172.17.0.1:41003",
                 "chain_id": 3151908
               }
             },
             "rollup": {
-              "bridge": "0xf5c2A4cD2d292962a24431a465943bea944f3C96",
-              "inbox": "0x5ed9B3f62f3634ed75059F8f5e43A906E28aC05B",
-              "sequencer-inbox": "0xeBF5A7357fff2dfC32D25d305bf3B14824fC0b51",
-              "deployed-at": 42,
-              "rollup": "0x8237056a90CD5aF979bAC1b2c3c2a7E402920b49",
+              "bridge": "0x6803932fF837e8D1b8fAbF910536d87B47b0F2D9",
+              "inbox": "0x1152F1d7cC4036c6599A7c907283517502010EC7",
+              "sequencer-inbox": "0x636C491cA58cFe8e5CBf30eC6EF926A50B88e7FE",
+              "deployed-at": 57,
+              "rollup": "0x3361cEF84B04e31bf0a58e55b3EE0eEbDaD2C792",
               "native-token": "0x0000000000000000000000000000000000000000",
-              "upgrade-executor": "0xc43d4DA821C43652B73218c0acF95A8be8Cd12F3",
-              "validator-wallet-creator": "0x329cF899464ba580Bf047F4B886dB342c602f579",
-              "stake-token": "0x4F60Bb906ee2188a14915c6b9D45381e2e04BA4c"
+              "upgrade-executor": "0x039128608D4d72a09fBD613cdC1B590e3C6A3EF0",
+              "validator-wallet-creator": "0x2A3365C575a5Fc8fD2842B82D29f8035E7f71CeC",
+              "stake-token": "0xB0275c9A863072599ea283A143414370470a369a"
             }
           }
         ]
       l2_chain_info_json: |
         [
           {
-            "chain-name": "ArbitrumLocalPreloaded",
+            "chain-name": "ArbitrumExternalDeploy",
             "parent-chain-id": 3151908,
             "parent-chain-is-arbitrum": false,
             "sequencer-url": "",
@@ -132,20 +132,20 @@ deployment:
                 "GenesisBlockNum": 0
               },
               "l1": {
-                "rpc_url": "http://172.16.4.11:8545",
+                "rpc_url": "http://172.17.0.1:41003",
                 "chain_id": 3151908
               }
             },
             "rollup": {
-              "bridge": "0xf5c2A4cD2d292962a24431a465943bea944f3C96",
-              "inbox": "0x5ed9B3f62f3634ed75059F8f5e43A906E28aC05B",
-              "sequencer-inbox": "0xeBF5A7357fff2dfC32D25d305bf3B14824fC0b51",
-              "deployed-at": 42,
-              "rollup": "0x8237056a90CD5aF979bAC1b2c3c2a7E402920b49",
+              "bridge": "0x6803932fF837e8D1b8fAbF910536d87B47b0F2D9",
+              "inbox": "0x1152F1d7cC4036c6599A7c907283517502010EC7",
+              "sequencer-inbox": "0x636C491cA58cFe8e5CBf30eC6EF926A50B88e7FE",
+              "deployed-at": 57,
+              "rollup": "0x3361cEF84B04e31bf0a58e55b3EE0eEbDaD2C792",
               "native-token": "0x0000000000000000000000000000000000000000",
-              "upgrade-executor": "0xc43d4DA821C43652B73218c0acF95A8be8Cd12F3",
-              "validator-wallet-creator": "0x329cF899464ba580Bf047F4B886dB342c602f579",
-              "stake-token": "0x4F60Bb906ee2188a14915c6b9D45381e2e04BA4c"
+              "upgrade-executor": "0x039128608D4d72a09fBD613cdC1B590e3C6A3EF0",
+              "validator-wallet-creator": "0x2A3365C575a5Fc8fD2842B82D29f8035E7f71CeC",
+              "stake-token": "0xB0275c9A863072599ea283A143414370470a369a"
             }
           }
         ]
