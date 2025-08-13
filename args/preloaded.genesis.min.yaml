@@ -1,0 +1,89 @@
+deployment:
+  mode: preloaded
+  preload:
+    additional_preloaded_contracts: "{}"
+    precomputed_artifacts:
+      l2_chain_info_genesis_json: |
+        [
+          {
+            "chain-name": "ArbitrumLocalFull",
+            "parent-chain-id": 3151908,
+            "parent-chain-is-arbitrum": false,
+            "sequencer-url": "",
+            "secondary-forwarding-target": "",
+            "feed-url": "",
+            "secondary-feed-url": "",
+            "das-index-url": "",
+            "has-genesis-state": true,
+            "chain-config": {
+              "chainId": 42161,
+              "homesteadBlock": 0,
+              "daoForkSupport": true,
+              "eip150Block": 0,
+              "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "eip155Block": 0,
+              "eip158Block": 0,
+              "byzantiumBlock": 0,
+              "constantinopleBlock": 0,
+              "petersburgBlock": 0,
+              "istanbulBlock": 0,
+              "muirGlacierBlock": 0,
+              "berlinBlock": 0,
+              "londonBlock": 0,
+              "clique": {
+                "period": 0,
+                "epoch": 0
+              },
+              "arbitrum": {
+                "EnableArbOS": true,
+                "AllowDebugPrecompiles": true,
+                "DataAvailabilityCommittee": false,
+                "InitialArbOSVersion": 40,
+                "InitialChainOwner": "0x0000000000000000000000000000000000000000",
+                "GenesisBlockNum": 0
+              },
+              "l1": {
+                "rpc_url": "http://172.16.0.11:8545",
+                "chain_id": 3151908
+              }
+            },
+            "rollup": {
+              "bridge": "0xD7d77DB753622F8453a87630282eDc92f36cC8D7",
+              "inbox": "0xdC7A63E7553A1566131Cd68C28C12D29d9972Bed",
+              "sequencer-inbox": "0x8A845dC3C38a8151f91Fe03be53F7B77bEa4B54E",
+              "deployed-at": 43,
+              "rollup": "0x74e1C69b92F89AECAC6c0220F855ebCE21fba168",
+              "native-token": "0x0000000000000000000000000000000000000000",
+              "upgrade-executor": "0xc43d4DA821C43652B73218c0acF95A8be8Cd12F3",
+              "validator-wallet-creator": "0x329cF899464ba580Bf047F4B886dB342c602f579",
+              "stake-token": "0x4F60Bb906ee2188a14915c6b9D45381e2e04BA4c"
+            }
+          }
+        ]
+ethereum_package: {}
+l2:
+  name: "ArbitrumLocalPreloaded"
+  chain_id: 42161
+  info_file_path: "/deploy/l2_chain_info.genesis.json"
+  sequencer:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8547
+    ws_port: 8548
+    feed_port: 9642
+  validator:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8247
+    ws_port: 8248
+  batch_poster:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  inbox_reader:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  validation_node:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    port: 8549
+  use_validator: false
+blockscout:
+  enabled: false
+  coin: "ETH"
+logging:
+  level: "info"

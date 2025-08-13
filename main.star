@@ -58,6 +58,8 @@ def run(plan, args={}):
     else:
         fail("Invalid deployment.mode: {}".format(mode))
 
+    if mode == "preloaded":
+        l2_args["no_l1_listener"] = True
     cfg_artifact = config_mod.write_configs(plan, l1_env, l2_args, l1_priv_key)
 
     deploy_mode = "deploy"
@@ -66,15 +68,25 @@ def run(plan, args={}):
     target = "internal"
     if mode == "preloaded":
         precomputed = deployment_args.get("preload", {}).get("precomputed_artifacts", {})
-        if bool(precomputed.get("contracts_json", "")) or bool(precomputed.get("deployed_chain_info_json", "")) or bool(precomputed.get("l2_chain_info_json", "")):
+        if (
+            bool(precomputed.get("contracts_json", "")) or
+            bool(precomputed.get("deployed_chain_info_json", "")) or
+            bool(precomputed.get("l2_chain_info_json", "")) or
+            bool(precomputed.get("l2_chain_info_genesis_json", ""))
+        ):
             deploy_mode = "skip"
     if mode.startswith("external"):
         target = "external"
         if mode == "external_existing":
             ext_cfg = deployment_args.get("external_l1", {})
             precomputed = ext_cfg.get("precomputed_artifacts", {})
-            if not (bool(precomputed.get("contracts_json", "")) or bool(precomputed.get("deployed_chain_info_json", "")) or bool(precomputed.get("l2_chain_info_json", ""))):
-                fail("external_existing mode requires external_l1.precomputed_artifacts to include at least one of: contracts_json, deployed_chain_info_json, l2_chain_info_json")
+            if not (
+                bool(precomputed.get("contracts_json", "")) or
+                bool(precomputed.get("deployed_chain_info_json", "")) or
+                bool(precomputed.get("l2_chain_info_json", "")) or
+                bool(precomputed.get("l2_chain_info_genesis_json", ""))
+            ):
+                fail("external_existing mode requires external_l1.precomputed_artifacts to include at least one of: contracts_json, deployed_chain_info_json, l2_chain_info_json, l2_chain_info_genesis_json")
             deploy_mode = "skip"
             contract_addresses = ext_cfg.get("contract_addresses", {})
 
@@ -110,6 +122,10 @@ def run(plan, args={}):
     seq_rpc = int(l2_args.get("sequencer", {}).get("rpc_port", 8547))
     seq_ws = int(l2_args.get("sequencer", {}).get("ws_port", 8548))
     seq_feed = int(l2_args.get("sequencer", {}).get("feed_port", 9642))
+    init_flags = []
+    if mode == "preloaded":
+        init_flags = ["--init.empty"]
+
     sequencer = plan.add_service(
         name="sequencer",
         config=ServiceConfig(
@@ -124,7 +140,7 @@ def run(plan, args={}):
                 "--graphql.enable",
                 "--graphql.vhosts=*",
                 "--graphql.corsdomain=*",
-            ],
+            ] + init_flags,
             files={"/config": cfg_artifact, "/deploy": deploy_artifact},
             ports={
                 "rpc": PortSpec(number=seq_rpc, transport_protocol="TCP"),
@@ -134,34 +150,35 @@ def run(plan, args={}):
         ),
     )
 
-    inbox_image = l2_args.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
-    inbox_reader = plan.add_service(
-        name="inbox-reader",
-        config=ServiceConfig(
-            image=inbox_image,
-            entrypoint=["/usr/local/bin/nitro"],
-            cmd=[
-                "--conf.file=/config/inbox_reader_config.json",
-                "--node.parent-chain-reader.use-finality-data=false",
-            ],
-            files={"/config": cfg_artifact, "/deploy": deploy_artifact},
-        ),
-    )
+    if mode != "preloaded":
+        inbox_image = l2_args.get("inbox_reader", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
+        inbox_reader = plan.add_service(
+            name="inbox-reader",
+            config=ServiceConfig(
+                image=inbox_image,
+                entrypoint=["/usr/local/bin/nitro"],
+                cmd=[
+                    "--conf.file=/config/inbox_reader_config.json",
+                    "--node.parent-chain-reader.use-finality-data=false",
+                ] + init_flags,
+                files={"/config": cfg_artifact, "/deploy": deploy_artifact},
+            ),
+        )
 
-    poster_image = l2_args.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
-    batch_poster = plan.add_service(
-        name="batch-poster",
-        config=ServiceConfig(
-            image=poster_image,
-            entrypoint=["/usr/local/bin/nitro"],
-            cmd=[
-                "--conf.file=/config/poster_config.json",
-                "--node.parent-chain-reader.use-finality-data=false",
-                "--node.batch-poster.l1-block-bound=latest",
-            ],
-            files={"/config": cfg_artifact, "/deploy": deploy_artifact},
-        ),
-    )
+        poster_image = l2_args.get("batch_poster", {}).get("image", "ghcr.io/offchainlabs/nitro:latest")
+        batch_poster = plan.add_service(
+            name="batch-poster",
+            config=ServiceConfig(
+                image=poster_image,
+                entrypoint=["/usr/local/bin/nitro"],
+                cmd=[
+                    "--conf.file=/config/poster_config.json",
+                    "--node.parent-chain-reader.use-finality-data=false",
+                    "--node.batch-poster.l1-block-bound=latest",
+                ] + init_flags,
+                files={"/config": cfg_artifact, "/deploy": deploy_artifact},
+            ),
+        )
 
     use_validator = bool(l2_args.get("use_validator", True))
     validator_rpc = ""
@@ -177,7 +194,7 @@ def run(plan, args={}):
                 cmd=[
                     "--conf.file=/config/validator_config.json",
                     "--http.api=net,web3,arb,debug",
-                ],
+                ] + init_flags,
                 files={"/config": cfg_artifact, "/deploy": deploy_artifact},
                 ports={
                     "rpc": PortSpec(number=val_rpc, transport_protocol="TCP"),

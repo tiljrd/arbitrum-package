@@ -1,0 +1,96 @@
+deployment:
+  mode: preloaded
+  preload:
+    additional_preloaded_contracts: '{}'
+      {
+        "0x120671ccdfebc50cfe7b7a62bd0593aa6e3f3cf0": {
+          "balance": "0ETH",
+          "code": "0x60806040526004361061017f5760003560e01c80639e5d4c49116100d6578063d5719dc21161007f578063eca067ad11610059578063eca067ad14610457578063ee35f3271461046c578063f81ff3b31461048c57600080fd5b8063d5719dc214610417578063e76f5c8d14610437578063e77145f41461023457600080fd5b8063c4d66de8116100b0578063c4d66de8146103b7578063cb23bcb5146103d7578063cee3d728146103f757600080fd5b80639e5d4c4914610337578063ab5d894314610365578063ae60bd131461037a57600080fd5b80635fca4a16116101385780638db5993b116101125780638db5993b146102f757806393665d391461031757600080fd5b80635fca4a14146102975780636352211e146102bc5780636c0360eb146102d757600080fd5b80630d3d3dc2146101845780631a304a09146101995780631f53f9b3146101b95780632768fabd146101de57806340c10f19146101fe575b600080fd5b610197600480360381019061019291906109b6565b6104ab565b005b6101a161052d565b6040516101ae919061115e565b60405180910390f35b6101c1610533565b6040516101ce91906111b9565b60405180910390f35b6101e6610539565b6040516101f3919061115e565b60405180910390f35b61020661053f565b604051610213919061115e565b60405180910390f35b61023c60048036038101906102379190610a1b565b610545565b005b6102... (truncated for brevity)
+          "storage": {}
+        }
+      }
+    precomputed_artifacts:
+      l2_chain_info_genesis_json: |
+        [
+          {
+            "chain-name": "ArbitrumLocalFull",
+            "parent-chain-id": 3151908,
+            "parent-chain-is-arbitrum": false,
+            "sequencer-url": "",
+            "secondary-forwarding-target": "",
+            "feed-url": "",
+            "secondary-feed-url": "",
+            "das-index-url": "",
+            "has-genesis-state": true,
+            "chain-config": {
+              "chainId": 42161,
+              "homesteadBlock": 0,
+              "daoForkSupport": true,
+              "eip150Block": 0,
+              "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "eip155Block": 0,
+              "eip158Block": 0,
+              "byzantiumBlock": 0,
+              "constantinopleBlock": 0,
+              "petersburgBlock": 0,
+              "istanbulBlock": 0,
+              "muirGlacierBlock": 0,
+              "berlinBlock": 0,
+              "londonBlock": 0,
+              "clique": {
+                "period": 0,
+                "epoch": 0
+              },
+              "arbitrum": {
+                "EnableArbOS": true,
+                "AllowDebugPrecompiles": true,
+                "DataAvailabilityCommittee": false,
+                "InitialArbOSVersion": 40,
+                "InitialChainOwner": "0x0000000000000000000000000000000000000000",
+                "GenesisBlockNum": 0
+              },
+              "l1": {
+                "rpc_url": "http://172.16.0.11:8545",
+                "chain_id": 3151908
+              }
+            },
+            "rollup": {
+              "bridge": "0xD7d77DB753622F8453a87630282eDc92f36cC8D7",
+              "inbox": "0xdC7A63E7553A1566131Cd68C28C12D29d9972Bed",
+              "sequencer-inbox": "0x8A845dC3C38a8151f91Fe03be53F7B77bEa4B54E",
+              "deployed-at": 43,
+              "rollup": "0x74e1C69b92F89AECAC6c0220F855ebCE21fba168",
+              "native-token": "0x0000000000000000000000000000000000000000",
+              "upgrade-executor": "0xc43d4DA821C43652B73218c0acF95A8be8Cd12F3",
+              "validator-wallet-creator": "0x329cF899464ba580Bf047F4B886dB342c602f579",
+              "stake-token": "0x4F60Bb906ee2188a14915c6b9D45381e2e04BA4c"
+            }
+          }
+        ]
+ethereum_package: {}
+l2:
+  name: "ArbitrumLocalPreloaded"
+  chain_id: 42161
+  info_file_path: "/deploy/l2_chain_info.genesis.json"
+  sequencer:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8547
+    ws_port: 8548
+    feed_port: 9642
+  validator:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    rpc_port: 8247
+    ws_port: 8248
+  batch_poster:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  inbox_reader:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+  validation_node:
+    image: "offchainlabs/nitro-node:v3.6.7-a7c9f1e"
+    port: 8549
+  use_validator: false
+blockscout:
+  enabled: false
+  coin: "ETH"
+logging:
+  level: "info"

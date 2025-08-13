@@ -5,6 +5,8 @@ def write_configs(plan, l1_config, l2_args, l1_priv_key):
     sequencer = l2_args.get("sequencer", {})
     validator = l2_args.get("validator", {})
     validation_node = l2_args.get("validation_node", {})
+    info_file_path = str(l2_args.get("info_file_path", "/deploy/l2_chain_info.json"))
+    no_l1_listener = bool(l2_args.get("no_l1_listener", False))
 
     key = str(l1_priv_key)
     if key.startswith("0x") or key.startswith("0X"):
@@ -27,6 +29,8 @@ def write_configs(plan, l1_config, l2_args, l1_priv_key):
         ValNodePort=int(validation_node.get("port", 8549)),
         ValJwtSecret="/config/val_jwt.hex",
         L1PrivKey=key,
+        InfoFilePath=info_file_path,
+        NoL1Listener=no_l1_listener,
     )
 
     artifact = plan.render_templates(
