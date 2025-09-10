@@ -1,4 +1,4 @@
-utils = import_module("github.com/LZeroAnalytics/optimism-package/src/util.star")
+utils = import_module("github.com/0xBloctopus/optimism-package/src/util.star")
 
 def deploy_rollup(plan, l1_env, l1_network_id, l1_priv_key, l2_args, config_artifact,
                   deploy_mode="deploy", target="internal",

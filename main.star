@@ -1,7 +1,7 @@
 ethereum_package = import_module("github.com/ethpandaops/ethereum-package/main.star")
 config_mod = import_module("./src/config.star")
 deployer = import_module("./src/deployer.star")
-blockscout = import_module("github.com/LZeroAnalytics/blockscout-package/main.star")
+blockscout = import_module("github.com/0xBloctopus/blockscout-package/main.star")
 
 def run(plan, args={}):
     deployment_args = args.get("deployment", {})
